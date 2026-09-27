@@ -1,9 +1,8 @@
 import re
 from sqlalchemy import select, func
-from sqlalchemy.orm import joinedload
 
 from core import get_session
-from models import Club
+from models import Club, User, UserRole, RoleType
 
 def _normalize_for_matching(name: str) -> str:
     return re.sub(r"[\s\-_]+", "", name.strip().lower())
@@ -103,8 +102,13 @@ def get_squad_length(club_id: int) -> int | None:
         return None
 
     with get_session() as session:
-        stmt = select(Club).where(Club.id == club_id).options(joinedload(Club.squad))
-        club = session.scalar(stmt)
-        if club:
-            return len(club.squad)
-        return None
+        stmt = (
+            select(func.count(User.id))
+            .join(UserRole, User.id == UserRole.user_id)
+            .where(
+                User.club_id == club_id,
+                UserRole.role == RoleType.PLAYER
+            )
+        )
+        
+        return session.scalar(stmt) or 0

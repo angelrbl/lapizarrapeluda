@@ -86,7 +86,14 @@ def get_user_by_club_name(name: str, club_id: int) -> User | None:
 
 def list_users_for_club(club_id: int) -> list[User]:
     with get_session() as session:
-        users = session.scalars(select(User).where(User.club_id == club_id)).all()
+        stmt = (
+            select(User)
+            .where(User.club_id == club_id)
+            .order_by(User.number.asc().nullslast())
+        )
+        
+        users = session.scalars(stmt).all()
         for u in users:
             session.expunge(u)
-        return users
+            
+        return list(users)

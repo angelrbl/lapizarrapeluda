@@ -15,5 +15,5 @@ class Club(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
 
-    squad: Mapped[list["User"]] = relationship(back_populates="club", cascade="all, delete-orphan")
+    squad: Mapped[list["User"]] = relationship(back_populates="club", cascade="all, delete-orphan", order_by="User.number.asc().nullslast()")
     events: Mapped[list["Event"]] = relationship(back_populates="club", foreign_keys="[Event.club_id]", cascade="all, delete-orphan")

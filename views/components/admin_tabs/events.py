@@ -299,7 +299,7 @@ def open_event_detail(event_id: int) -> None:
     dialog.open()
 
 
-def events_tab_page(club: Club):
+def events_tab_page(club: Club, on_change: callable):
     with ui.column().classes('w-full max-w-lg mx-auto min-h-screen p-4 gap-4'):
 
         events = list_events_for_club(club_id=club.id)
@@ -346,7 +346,7 @@ def events_tab_page(club: Club):
                                 (
                                     ui.button(
                                         text="Borrar",
-                                        on_click=lambda ev=event: handle_delete_event(ev.id),
+                                        on_click=lambda ev=event: handle_delete_event(ev.id, on_change=on_change),
                                     )
                                 )
                                     

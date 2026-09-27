@@ -36,6 +36,6 @@ def admin_page() -> None:
                     squad_tab_page(club=club, on_change=lambda: render_admin_tabs.refresh(value=squad_tab))
 
                 with ui.tab_panel(events_tab):
-                    events_tab_page(club=club)
+                    events_tab_page(club=club, on_change=lambda: render_admin_tabs.refresh(value=events_tab))
 
         render_admin_tabs()

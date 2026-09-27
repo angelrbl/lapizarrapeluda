@@ -17,7 +17,7 @@ DAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "doming
 
 @ui.page("/e/{token_value}")
 def event_page(token_value: str):
-    with frame(navigation_title="Evento"):
+    with frame(navigation_title="SOM-HI"):
         token = get_valid_token(token_value, TokenType.EVENT)
         if not token:
             ui.label("¡Qué lastima!").classes("text-3xl font-black text-negative")
@@ -26,10 +26,16 @@ def event_page(token_value: str):
 
         event = get_event_by_id(token.event_id)
 
-        if event.status == EventStatus.OPEN:
-            render_open_event(event)
-        else:
-            render_confirmed_event(event)
+        with ui.column().classes('w-full bg-white relative z-10 pb-8'):
+            if event.status == EventStatus.OPEN:
+                render_open_event(event)
+            else:
+                render_confirmed_event(event)
+
+        with ui.row().classes('fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-3xl items-center justify-between px-6 -z-10'):
+            ui.image('/static/tag-heuer.png').classes('ml-3 w-16 sm:w-20 h-12 sm:h-16').props('fit="contain"')
+            ui.image('/static/estrella-damm.png').classes('w-16 sm:w-20 h-12 sm:h-16').props('fit="contain"')
+            ui.image('/static/suave.png').classes('w-16 sm:w-20 h-12 sm:h-16').props('fit="contain"')
 
 def render_confirmed_event(event) -> None:
     slot = get_slot_by_id(event.confirmed_slot_id) if event.confirmed_slot_id else None
@@ -229,7 +235,7 @@ def render_open_event(event) -> None:
         render_grid.refresh()
 
     with ui.column().classes("w-full max-w-2xl mx-auto gap-1"):
-        ui.label(event.title).classes("text-lg font-bold text-dark")
+        ui.label(event.title).classes("text-xl font-black text-dark")
         if event.opponent_name:
             ui.label(f"vs. {event.opponent_name}").classes("text-dark text-sm")
 
@@ -240,7 +246,6 @@ def render_open_event(event) -> None:
         ui.select(
             {m.id: m.name for m in members},
             label="¿Quién eres?",
-            with_input=True,
             on_change=on_pick,
         ).classes("w-full mt-3").props('standout="bg-primary text-white"')
 
