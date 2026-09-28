@@ -20,10 +20,11 @@ def handle_login(
         user = authenticate_user(name=name, club_id=club_id, password=password)
         app.storage.user['user_id'] = user.id
         app.storage.user['is_admin'] = user.is_admin
+        app.storage.user['is_active'] = user.is_active
         app.storage.user['club_id'] = club_id
 
         ui.notify("¡Sesión iniciada con éxito! Redirigiéndole a staff...", type="positive")
-        ui.navigate.to('/admin')
+        ui.navigate.to('/staff')
     except ValueError as e:
         match str(e):
             case "error_user_does_not_exist":
@@ -45,7 +46,7 @@ def handle_login(
 @ui.page('/{club_name}/login')
 def login_page(club_name: str | None = None) -> None:
     if app.storage.user.get("user_id", None):
-        ui.navigate.to('/admin')
+        ui.navigate.to('/staff')
         return
 
     club = get_club_by_name(name=club_name) if club_name else get_only_club()

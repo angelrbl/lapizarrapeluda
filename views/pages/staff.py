@@ -1,24 +1,26 @@
 from nicegui import ui, app
 
 from views.layout import frame
-from views.components.admin_tabs import club_tab_page, squad_tab_page, events_tab_page
+from views.components.staff_tabs import club_tab_page, squad_tab_page, events_tab_page
 
 from services.club_service import get_club_by_id
 
 
-@ui.page('/admin')
+@ui.page('/staff')
 def admin_page() -> None:
     if not app.storage.user.get('user_id', None) or not app.storage.user.get('club_id', None):
         ui.navigate.to('/login')
         return
 
     club_id = app.storage.user.get('club_id')
+    is_admin = app.storage.user.get('is_admin', None)
+    is_active = app.storage.user.get('is_active', None)
     club = get_club_by_id(club_id=club_id)
 
-    with frame(navigation_title=(club.name if len(club.name) < 10 else "Admin")):
-        if not app.storage.user.get('is_admin', None):
+    with frame(navigation_title=(club.name if len(club.name) < 10 else "Staff")):
+        if not is_active:
             ui.label("¡Prohíbido el paso!").classes("text-3xl font-black text-negative")
-            ui.label("Solo el administrador de tu club puede estar aquí.").classes('text-xl font-bold text-slate-700')
+            ui.label("Solo el staff de tu club puede estar aquí.").classes('text-xl font-bold text-slate-700')
             return
 
         with ui.tabs().classes('w-full text-primary') as tabs:

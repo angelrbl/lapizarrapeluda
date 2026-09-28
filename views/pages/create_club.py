@@ -33,6 +33,7 @@ def handle_create_club(
         set_user_roles(user_id=user.id, roles=[RoleType.STAFF])
         app.storage.user['user_id'] = user.id
         app.storage.user['is_admin'] = True
+        app.storage.user['is_active'] = True
 
         ui.notify("¡El club se creó con éxito! Iniciando sesión en el dashboard de administrador.", type="positive")
         ui.navigate.to('/login')

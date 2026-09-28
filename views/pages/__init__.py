@@ -2,7 +2,7 @@ from views.pages import (
     create_club,
     create_event,
     login,
-    admin,
+    staff,
     event,
     activate
 )
