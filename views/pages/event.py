@@ -157,73 +157,74 @@ def render_open_event(event) -> None:
         new_index = state["week_index"] + delta
         if 0 <= new_index < len(week_starts):
             state["week_index"] = new_index
-            render_grid.refresh()
+            render_grid()
 
-    @ui.refreshable
     def render_grid() -> None:
+        grid_container.clear()
         slot_buttons.clear()
 
-        if not state["user_id"]:
-            ui.label("Elige tu nombre arriba para ver y marcar las franjas.").classes("text-sm text-gray-500 mt-4")
-            return
+        with grid_container:
+            if not state["user_id"]:
+                ui.label("Elige tu nombre arriba para ver y marcar las franjas.").classes("text-sm text-gray-500 mt-4")
+                return
 
-        if not slots:
-            ui.label("Este evento no tiene franjas candidatas todavía.").classes("mt-4 text-sm text-gray-500")
-            return
+            if not slots:
+                ui.label("Este evento no tiene franjas candidatas todavía.").classes("mt-4 text-sm text-gray-500")
+                return
 
-        with ui.row().classes("items-start gap-2 mt-3 p-3 pl-0 bg-primary/10 rounded-lg no-wrap"):
-            ui.icon("warning").classes("text-primary text-base flex-shrink-0 font-black")
-            ui.label("Marca solo las franjas en las que NO puedes asistir.").classes(
-                "text-primary text-xs leading-relaxed font-bold"
-            )
+            with ui.row().classes("items-start gap-2 mt-3 p-3 pl-0 bg-primary/10 rounded-lg no-wrap"):
+                ui.icon("warning").classes("text-primary text-base flex-shrink-0 font-black")
+                ui.label("Marca solo las franjas en las que NO puedes asistir.").classes(
+                    "text-primary text-xs leading-relaxed font-bold"
+                )
 
-        current_week_start = week_starts[state["week_index"]]
-        current_week_days = days_by_week[current_week_start]
-        current_week_end = current_week_start + timedelta(days=6)
-        is_first_week = state["week_index"] == 0
-        is_last_week = state["week_index"] == len(week_starts) - 1
+            current_week_start = week_starts[state["week_index"]]
+            current_week_days = days_by_week[current_week_start]
+            current_week_end = current_week_start + timedelta(days=6)
+            is_first_week = state["week_index"] == 0
+            is_last_week = state["week_index"] == len(week_starts) - 1
 
-        with ui.row().classes("items-center justify-between w-full no-wrap mt-4"):
-            ui.button(icon="chevron_left", on_click=lambda: change_week(-1)).props(
-                "flat round dense" + (" disable" if is_first_week else "")
-            ).classes("text-primary")
-            ui.label(f"{current_week_start:%d/%m} - {current_week_end:%d/%m}").classes(
-                "text-base font-bold text-dark"
-            )
-            ui.button(icon="chevron_right", on_click=lambda: change_week(1)).props(
-                "flat round dense" + (" disable" if is_last_week else "")
-            ).classes("text-primary")
+            with ui.row().classes("items-center justify-between w-full no-wrap mt-4"):
+                ui.button(icon="chevron_left", on_click=lambda: change_week(-1)).props(
+                    "flat round dense" + (" disable" if is_first_week else "")
+                ).classes("text-primary")
+                ui.label(f"{current_week_start:%d/%m} - {current_week_end:%d/%m}").classes(
+                    "text-base font-bold text-dark"
+                )
+                ui.button(icon="chevron_right", on_click=lambda: change_week(1)).props(
+                    "flat round dense" + (" disable" if is_last_week else "")
+                ).classes("text-primary")
 
-        grid_style = f"grid-template-columns: 56px repeat({len(current_week_days)}, minmax(64px, 1fr));"
-        with ui.element("div").classes("w-full overflow-x-auto mt-3"):
-            with ui.element("div").classes("grid gap-1 sm:gap-2").style(grid_style):
-                ui.element("div")
-                for day in current_week_days:
-                    with ui.column().classes("items-center gap-0"):
-                        ui.label(DAYS[day.weekday()][:3].capitalize()).classes("text-sm font-semibold text-dark")
-                        ui.label(f"{day:%d/%m}").classes("text-xs text-gray-500")
-
-                for t in all_times:
-                    ui.label(f"{t:%H:%M}").classes("text-xs text-gray-500 flex items-center")
+            grid_style = f"grid-template-columns: 56px repeat({len(current_week_days)}, minmax(64px, 1fr));"
+            with ui.element("div").classes("w-full overflow-x-auto mt-3"):
+                with ui.element("div").classes("grid gap-1 sm:gap-2").style(grid_style):
+                    ui.element("div")
                     for day in current_week_days:
-                        slot = slot_lookup.get((day, t))
-                        if slot is None:
-                            ui.element("div")
-                            continue
-                        btn = (
-                            ui.button(on_click=lambda sid=slot.id: toggle_slot(sid))
-                            .props(f'unelevated dense aria-label="{DAYS[day.weekday()]} {day:%d/%m} {t:%H:%M}"')
-                            .classes(f"{BASE_CLASSES} {UNSELECTED}")
-                        )
-                        slot_buttons[slot.id] = btn
-                        style_slot_button(slot.id)
+                        with ui.column().classes("items-center gap-0"):
+                            ui.label(DAYS[day.weekday()][:3].capitalize()).classes("text-sm font-semibold text-dark")
+                            ui.label(f"{day:%d/%m}").classes("text-xs text-gray-500")
 
-        with ui.column().classes("items-center justify-between w-full no-wrap gap-2"):
-            count_label_ref["label"] = ui.label("").classes("text-gray-800 font-semibold text-xs mt-4")
-            ui.button("Guardar", on_click=save).props("unelevated").classes(
-                "bg-primary text-white rounded-lg w-full"
-            )
-        update_count()
+                    for t in all_times:
+                        ui.label(f"{t:%H:%M}").classes("text-xs text-gray-500 flex items-center")
+                        for day in current_week_days:
+                            slot = slot_lookup.get((day, t))
+                            if slot is None:
+                                ui.element("div")
+                                continue
+                            btn = (
+                                ui.button(on_click=lambda sid=slot.id: toggle_slot(sid))
+                                .props(f'unelevated dense aria-label="{DAYS[day.weekday()]} {day:%d/%m} {t:%H:%M}"')
+                                .classes(f"{BASE_CLASSES} {UNSELECTED}")
+                            )
+                            slot_buttons[slot.id] = btn
+                            style_slot_button(slot.id)
+
+            with ui.column().classes("items-center justify-between w-full no-wrap gap-2"):
+                count_label_ref["label"] = ui.label("").classes("text-gray-800 font-semibold text-xs mt-4")
+                ui.button("Guardar", on_click=save).props("unelevated").classes(
+                    "bg-primary text-white rounded-lg w-full"
+                )
+            update_count()
 
     def on_pick(e) -> None:
         state["user_id"] = e.value
@@ -232,7 +233,7 @@ def render_open_event(event) -> None:
         for slot in slots:
             selected_slots[slot.id] = slot.id in my_unavailable
         state["week_index"] = default_week_index
-        render_grid.refresh()
+        render_grid()
 
     with ui.column().classes("w-full max-w-2xl mx-auto gap-1"):
         ui.label(event.title).classes("text-xl font-black text-dark")
@@ -249,4 +250,5 @@ def render_open_event(event) -> None:
             on_change=on_pick,
         ).classes("w-full mt-3").props('standout="bg-primary text-white"')
 
+        grid_container = ui.column().classes("w-full")
         render_grid()

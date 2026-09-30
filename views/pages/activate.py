@@ -46,7 +46,7 @@ def handle_activate(
 @ui.page('/activate/{token_value}')
 def activate_page(token_value: str) -> None:
     if app.storage.user.get("user_id", None):
-        ui.navigate.to('/admin')
+        ui.navigate.to('/staff')
         return
 
     token = get_valid_token(token_value, TokenType.ACTIVATION)

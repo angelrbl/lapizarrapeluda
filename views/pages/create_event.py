@@ -14,7 +14,7 @@ WEEKDAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"]
 DURATION_OPTIONS = {30: "30 min", 60: "1 h", 90: "1 h 30 min", 120: "2 h"}
 
 
-@ui.page("/admin/events/new")
+@ui.page("/staff/events/new")
 def new_event_page():
     if not app.storage.user.get('user_id', None) or not app.storage.user.get('club_id', None):
         ui.navigate.to('/login')
@@ -22,7 +22,7 @@ def new_event_page():
 
     admin = get_user_by_id(app.storage.user["user_id"])
     if not admin or not admin.is_admin:
-        ui.navigate.to("/admin")
+        ui.navigate.to("/staff")
         return
 
     club_id = app.storage.user.get('club_id', None)
@@ -31,7 +31,7 @@ def new_event_page():
 
     with frame(navigation_title="Crear evento"):
         with ui.column().classes("w-full p-4 gap-2"):
-            ui.label("← Volver a admin").classes('text-primary text-md hover:text-primary/90 cursor-pointer').on('click', lambda: ui.navigate.to('/admin'))
+            ui.label("← Volver a staff").classes('text-primary text-md hover:text-primary/90 cursor-pointer').on('click', lambda: ui.navigate.to('/staff'))
             ui.label("Nuevo evento").classes("text-3xl text-primary font-bold mt-3")
 
             title_input = ui.input("Título").classes("w-full text-gray-900").props('standout="bg-primary text-white"')
@@ -151,8 +151,8 @@ def new_event_page():
             )
             create_event_token(event.id)
             ui.notify(f"Evento creado con {len(slots)} franjas", color="positive")
-            ui.navigate.to("/admin")
+            ui.navigate.to("/staff")
 
         with ui.row().classes("justify-end w-full mt.4 gap-2"):
-            ui.button("Cancelar", on_click=lambda: ui.navigate.to("/admin")).props("flat")
+            ui.button("Cancelar", on_click=lambda: ui.navigate.to("/staff")).props("flat")
             ui.button("Crear evento", on_click=save).props("color=primary")
