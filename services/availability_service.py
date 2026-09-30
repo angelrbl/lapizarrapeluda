@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from core import get_session
 from models import Slot, Unavailability
@@ -15,10 +16,15 @@ def set_unavailability(user_id: int, event_id: int, slot_ids: list[int]) -> None
         for slot in existing:
             session.delete(slot)
 
+        session.flush()
+
         for slot_id in slot_ids:
             session.add(Unavailability(user_id=user_id, slot_id=slot_id))
 
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
 
 def get_user_unavailable_slot_ids(user_id: int, event_id: int) -> set[int]:
     with get_session() as session:
