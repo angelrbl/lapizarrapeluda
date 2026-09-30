@@ -150,8 +150,13 @@ def render_open_event(event) -> None:
             ui.notify("Elige tu nombre primero.", type="negative")
             return
         chosen = [sid for sid, is_selected in selected_slots.items() if is_selected]
-        set_unavailability(user_id=state["user_id"], event_id=event.id, slot_ids=chosen)
-        ui.notify("¡Guardado!", type="positive")
+        try:
+            set_unavailability(user_id=state["user_id"], event_id=event.id, slot_ids=chosen)
+            ui.notify("¡Guardado!", type="positive")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()  # esto aparece en los logs de Render
+            ui.notify(f"No se ha podido guardar: {e}", type="negative", timeout=0, close_button=True)
 
     def change_week(delta: int) -> None:
         new_index = state["week_index"] + delta
@@ -228,7 +233,13 @@ def render_open_event(event) -> None:
 
     def on_pick(e) -> None:
         state["user_id"] = e.value
-        my_unavailable = get_user_unavailable_slot_ids(state["user_id"], event.id)
+        try:
+            my_unavailable = get_user_unavailable_slot_ids(state["user_id"], event.id)
+        except Exception as ex:
+            import traceback
+            traceback.print_exc()
+            ui.notify(f"No se ha podido cargar tu disponibilidad: {ex}", type="negative", timeout=0, close_button=True)
+            return
         selected_slots.clear()
         for slot in slots:
             selected_slots[slot.id] = slot.id in my_unavailable
