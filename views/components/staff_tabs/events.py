@@ -143,7 +143,7 @@ def open_best_slots_view(event, slots, baja_counts, total_users) -> None:
     dialog.open()
 
 
-def open_event_detail(event_id: int) -> None:
+def open_event_detail(event_id: int, is_admin: bool = False) -> None:
     event = get_event_by_id(event_id)
     slots = get_event_slots(event_id)
     token = get_event_token(event_id)
@@ -271,7 +271,7 @@ def open_event_detail(event_id: int) -> None:
                                     cell_classes += " cursor-pointer hover:scale-[1.04]"
 
                                 cell = ui.element('div').classes(cell_classes).style(f'background:{bg} !important;')
-                                if is_open:
+                                if is_open and is_admin:
                                     cell.on('click', lambda s=slot: handle_confirm_slot(event_id, s.id, dialog))
                                 with cell:
                                     ui.label(str(count)).classes('text-lg font-bold leading-none')
@@ -283,7 +283,7 @@ def open_event_detail(event_id: int) -> None:
                                             'absolute top-1 right-1 text-white text-xs drop-shadow'
                                         )
 
-                if is_open:
+                if is_open and is_admin:
                     ui.label('Toca una franja para confirmarla como horario definitivo.').classes(
                         'text-xs text-gray-400 mt-1'
                     )
@@ -291,9 +291,10 @@ def open_event_detail(event_id: int) -> None:
             render_grid()
 
         with ui.row().classes('w-full justify-between items-center mt-2'):
-            ui.button('Eliminar evento', on_click=lambda: confirm_delete_event(event_id, dialog)).props(
-                'flat no-caps'
-            ).classes('text-red-600')
+            if is_admin:
+                ui.button('Eliminar evento', on_click=lambda: confirm_delete_event(event_id, dialog)).props(
+                    'flat no-caps'
+                ).classes('text-red-600')
             ui.button('Cerrar', on_click=dialog.close).props('flat no-caps').classes('text-gray-600')
 
     dialog.open()
@@ -306,11 +307,12 @@ def events_tab_page(club: Club, on_change: callable, is_admin: bool = False):
 
         with ui.row().classes('w-full justify-between items-center mb-2'):
             ui.label('Eventos').classes('text-2xl font-bold text-gray-900')
-            ui.button(
-                'Nuevo evento', icon='add', on_click=lambda: ui.navigate.to('/staff/events/new')
-            ).props('unelevated no-caps').classes(
-                'bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5'
-            )
+            if is_admin:
+                ui.button(
+                    'Nuevo evento', icon='add', on_click=lambda: ui.navigate.to('/staff/events/new')
+                ).props('unelevated no-caps').classes(
+                    'bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5'
+                )
 
         if not events:
             ui.label('Todavía no hay eventos. Crea el primero.').classes('text-sm text-gray-500')
@@ -324,7 +326,7 @@ def events_tab_page(club: Club, on_change: callable, is_admin: bool = False):
             ):
                 with ui.row().classes('w-full items-start no-wrap gap-2'):
                     with ui.column().classes('flex-grow gap-0 cursor-pointer').on(
-                        'click', lambda ev=event: open_event_detail(ev.id)
+                        'click', lambda ev=event: open_event_detail(ev.id, is_admin)
                     ):
                         title = (
                             event.title
@@ -338,15 +340,15 @@ def events_tab_page(club: Club, on_change: callable, is_admin: bool = False):
                         ui.label(label_text).classes(
                             f'px-2.5 py-0.5 text-xs font-medium rounded-full {badge_style}'
                         )
-                        with ui.dropdown_button().props('flat round density=compact dropdown-icon="delete" no-icon-animation') \
-                            .classes('text-gray-400 hover:text-primary hover:bg-accent'):
-                            with ui.column().classes("p-4 gap-1 w-full text-center mb-2 items-center"):
-                                ui.label("¿Estás seguro?").classes('font-bold text-md text-slate-600')
-                                ui.label("No podrás recuperar los datos.").classes('text-sm mb-1 text-slate-500')
-                                (
-                                    ui.button(
-                                        text="Borrar",
-                                        on_click=lambda ev=event: handle_delete_event(ev.id, on_change=on_change),
+                        if is_admin:
+                            with ui.dropdown_button().props('flat round density=compact dropdown-icon="delete" no-icon-animation') \
+                                .classes('text-gray-400 hover:text-primary hover:bg-accent'):
+                                with ui.column().classes("p-4 gap-1 w-full text-center mb-2 items-center"):
+                                    ui.label("¿Estás seguro?").classes('font-bold text-md text-slate-600')
+                                    ui.label("No podrás recuperar los datos.").classes('text-sm mb-1 text-slate-500')
+                                    (
+                                        ui.button(
+                                            text="Borrar",
+                                            on_click=lambda ev=event: handle_delete_event(ev.id, on_change=on_change),
+                                        )
                                     )
-                                )
-                                    
