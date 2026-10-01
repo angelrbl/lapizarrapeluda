@@ -37,7 +37,7 @@ En vez de preguntar "¿cuándo puedes?", la aplicación pregunta **"¿cuándo NO
 - **Enlace público por evento** (`/e/{token}`), sin necesidad de iniciar sesión: el jugador elige su nombre en la lista del club y marca sus franjas imposibles sobre un calendario en rejilla, paginado por semanas.
 - **Mapa de bajas** por franja para el staff, coloreado de verde (pocas bajas) a rojo (muchas), con confirmación del horario definitivo en un solo toque (con paso de confirmación explícito, para evitar confirmar por error).
 - **Botón "Añadir a mi calendario"**, una vez confirmado el horario (plantilla de Google Calendar, sin necesidad de conectar una cuenta).
-- **Panel de administración** (`/admin`): gestión del club, la plantilla de jugadores y los eventos.
+- **Panel de staff** (`/staff`): gestión del club, la plantilla de jugadores y los eventos. El admin del club puede crear y modificar estos datos.
 
 ## Stack técnico
 
@@ -75,7 +75,7 @@ lapizarrapeluda/
 ├── views/
 │   ├── pages/                 # rutas @ui.page
 │   ├── components/
-│   │   └── admin_tabs/          # pestañas del panel de administración
+│   │   └── staff_tabs/          # pestañas del panel de administración
 │   ├── layout.py                # cabecera y guardas de sesión compartidas
 │   └── theme.py                  # paleta de colores del club
 ├── static/                    # escudo del club y otros activos
@@ -103,9 +103,9 @@ Cada función de servicio sigue el mismo patrón: abre su propia sesión (`with 
 | `/create_club` | Nadie (una sola vez) | Arranca el club y su admin |
 | `/login` | Staff | Nombre + contraseña |
 | `/activate/{token}` | Staff invitado | Fija su contraseña, nombre no editable |
-| `/admin` | Staff (admin) | Club · Plantilla · Eventos |
-| `/admin/events/new` | Staff (admin) | Crear evento con franjas generadas |
-| `/admin/events/{id}` | Staff (admin) | Enlace, mapa de bajas, confirmar horario |
+| `/staff` | Staff | Club · Plantilla · Eventos |
+| `/staff/events/new` | Staff | Crear evento con franjas generadas |
+| `/staff/events/{id}` | Staff | Enlace, mapa de bajas, confirmar horario |
 | `/e/{token}` | Cualquier jugador, sin sesión | Elegir nombre y marcar indisponibilidad, o ver el horario confirmado |
 
 ## Licencia
