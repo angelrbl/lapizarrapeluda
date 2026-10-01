@@ -95,38 +95,39 @@ def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> N
     with ui.column().classes('w-full max-w-lg mx-auto min-h-screen p-4 gap-4'):
 
         squad = list_users_for_club(club_id=club.id)
-        
-        with ui.row().classes('w-full justify-between items-center mb-2'):
-            ui.label('Jugadores').classes('text-2xl font-bold text-gray-900')
-            
-            with ui.dropdown_button('Nuevo jugador', icon='add') \
-                .props('unelevated no-caps') \
-                .classes('bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5'):
-                with ui.column().classes("p-4 gap-1 w-full text-center mb-2"):
-                    ui.label("User info").classes('text-md text-slate-500').classes('text-md text-gray-900')
-                    with ui.row().classes('w-full gap-1'):
-                        create_name = ui.input(label="Nombre").props('standout="bg-primary text-white"')
-                        create_number = ui.number(label="Dorsal", min=1, max=99, step=1).props('standout="bg-primary text-white"')
 
-                    create_roles = ui.select({rt: rt.value.title() for rt in RoleType}, clearable=True, multiple=True, label="Roles").classes('w-full mb-2').props('use-chips')
-    
-                    create_error_label = ui.label(text="").classes('text-md text-negative hidden')
-    
-                    (
-                        ui.button(
-                            text="Crear",
-                            on_click=lambda: handle_user(
-                                club_id=club.id,
-                                name=create_name.value,
-                                number=create_number.value,
-                                action="create",
-                                on_change=on_change,
-                                roles=create_roles.value or [],
-                                error_label=create_error_label
+        if is_admin:
+            with ui.row().classes('w-full justify-between items-center mb-2'):
+                ui.label('Jugadores').classes('text-2xl font-bold text-gray-900')
+                
+                with ui.dropdown_button('Nuevo jugador', icon='add') \
+                    .props('unelevated no-caps') \
+                    .classes('bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5'):
+                    with ui.column().classes("p-4 gap-1 w-full text-center mb-2"):
+                        ui.label("User info").classes('text-md text-slate-500').classes('text-md text-gray-900')
+                        with ui.row().classes('w-full gap-1'):
+                            create_name = ui.input(label="Nombre").props('standout="bg-primary text-white"')
+                            create_number = ui.number(label="Dorsal", min=1, max=99, step=1).props('standout="bg-primary text-white"')
+
+                        create_roles = ui.select({rt: rt.value.title() for rt in RoleType}, clearable=True, multiple=True, label="Roles").classes('w-full mb-2').props('use-chips')
+        
+                        create_error_label = ui.label(text="").classes('text-md text-negative hidden')
+        
+                        (
+                            ui.button(
+                                text="Crear",
+                                on_click=lambda: handle_user(
+                                    club_id=club.id,
+                                    name=create_name.value,
+                                    number=create_number.value,
+                                    action="create",
+                                    on_change=on_change,
+                                    roles=create_roles.value or [],
+                                    error_label=create_error_label
+                                )
                             )
+                            .classes('w-full pt-3 pb-3 rounded-md font-bold')
                         )
-                        .classes('w-full pt-3 pb-3 rounded-md font-bold')
-                    )
 
         for user in squad:
             user_roles = get_user_roles(user_id=user.id)
@@ -159,56 +160,57 @@ def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> N
                 with ui.row().classes('w-full justify-between items-center'):
                     roles_text = ", ".join(role.value.title() for role in user_roles)
                     ui.label(roles_text).classes('text-sm font-medium text-gray-600')
-                    
-                    with ui.row().classes('gap-1 items-center'):
-                        ui.button(icon='link', on_click=lambda usr=user: handle_create_activation_link(user=usr)) \
-                            .props('flat round density=compact') \
-                            .classes('text-gray-400 hover:text-gray-700 hover:bg-gray-200')
 
-                        
-                        with ui.dropdown_button(icon='edit').props('flat round density=compact') \
-                            .classes('text-gray-400 hover:text-gray-700 hover:bg-gray-200'):
-                            with ui.column().classes("p-4 gap-1 w-full text-center mb-2"):
-                                ui.label("User info").classes('text-md text-slate-500')
-                                with ui.row().classes('w-full gap-1'):
-                                    edit_name = ui.input(label="Nombre", value=user.name).props('standout="bg-primary text-white"')
-                                    edit_number = ui.number(label="Dorsal", min=1, max=99, step=1, value=user.number).props('standout="bg-primary text-white"')
-            
-                                edit_roles = ui.select(
-                                    {rt: rt.value.title() for rt in RoleType},
-                                    value=user_roles,
-                                    clearable=True, multiple=True, label="Roles").classes('w-full mb-2').props('use-chips')
+                    if is_admin:
+                        with ui.row().classes('gap-1 items-center'):
+                            ui.button(icon='link', on_click=lambda usr=user: handle_create_activation_link(user=usr)) \
+                                .props('flat round density=compact') \
+                                .classes('text-gray-400 hover:text-gray-700 hover:bg-gray-200')
+
+                            
+                            with ui.dropdown_button(icon='edit').props('flat round density=compact') \
+                                .classes('text-gray-400 hover:text-gray-700 hover:bg-gray-200'):
+                                with ui.column().classes("p-4 gap-1 w-full text-center mb-2"):
+                                    ui.label("User info").classes('text-md text-slate-500')
+                                    with ui.row().classes('w-full gap-1'):
+                                        edit_name = ui.input(label="Nombre", value=user.name).props('standout="bg-primary text-white"')
+                                        edit_number = ui.number(label="Dorsal", min=1, max=99, step=1, value=user.number).props('standout="bg-primary text-white"')
                 
-                                edit_error_label = ui.label(text="").classes('text-md text-negative hidden')
-                
-                                (
-                                    ui.button(
-                                        text="Editar",
-                                        on_click=lambda usr_id=user.id, n=edit_name, num=edit_number, r=edit_roles, err=edit_error_label: handle_user(
-                                            club_id=club.id,
-                                            name=n.value,
-                                            number=num.value,
-                                            action="edit",
-                                            on_change=on_change,
-                                            user_id=usr_id,
-                                            roles=r.value or [],
-                                            error_label=err,
+                                    edit_roles = ui.select(
+                                        {rt: rt.value.title() for rt in RoleType},
+                                        value=user_roles,
+                                        clearable=True, multiple=True, label="Roles").classes('w-full mb-2').props('use-chips')
+                    
+                                    edit_error_label = ui.label(text="").classes('text-md text-negative hidden')
+                    
+                                    (
+                                        ui.button(
+                                            text="Editar",
+                                            on_click=lambda usr_id=user.id, n=edit_name, num=edit_number, r=edit_roles, err=edit_error_label: handle_user(
+                                                club_id=club.id,
+                                                name=n.value,
+                                                number=num.value,
+                                                action="edit",
+                                                on_change=on_change,
+                                                user_id=usr_id,
+                                                roles=r.value or [],
+                                                error_label=err,
+                                            )
+                                        )
+                                        .classes('w-full pt-3 pb-3 rounded-md font-bold')
+                                    )
+                            
+                            with ui.dropdown_button().props('flat round density=compact dropdown-icon="delete" no-icon-animation') \
+                                .classes('text-gray-400 hover:text-primary hover:bg-accent'):
+                                with ui.column().classes("p-4 gap-1 w-full text-center mb-2 items-center"):
+                                    ui.label("¿Estás seguro?").classes('font-bold text-md text-slate-600')
+                                    ui.label("No podrás recuperar los datos.").classes('text-sm mb-1 text-slate-500')
+                                    (
+                                        ui.button(
+                                            text="Borrar",
+                                            on_click=lambda usr_id=user.id: handle_delete_user(
+                                                user_id=usr_id,
+                                                on_change=on_change
+                                            )
                                         )
                                     )
-                                    .classes('w-full pt-3 pb-3 rounded-md font-bold')
-                                )
-                        
-                        with ui.dropdown_button().props('flat round density=compact dropdown-icon="delete" no-icon-animation') \
-                            .classes('text-gray-400 hover:text-primary hover:bg-accent'):
-                            with ui.column().classes("p-4 gap-1 w-full text-center mb-2 items-center"):
-                                ui.label("¿Estás seguro?").classes('font-bold text-md text-slate-600')
-                                ui.label("No podrás recuperar los datos.").classes('text-sm mb-1 text-slate-500')
-                                (
-                                    ui.button(
-                                        text="Borrar",
-                                        on_click=lambda usr_id=user.id: handle_delete_user(
-                                            user_id=usr_id,
-                                            on_change=on_change
-                                        )
-                                    )
-                                )

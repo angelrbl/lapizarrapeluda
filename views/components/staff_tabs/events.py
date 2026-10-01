@@ -307,7 +307,7 @@ def events_tab_page(club: Club, on_change: callable, is_admin: bool = False):
         with ui.row().classes('w-full justify-between items-center mb-2'):
             ui.label('Eventos').classes('text-2xl font-bold text-gray-900')
             ui.button(
-                'Nuevo evento', icon='add', on_click=lambda: ui.navigate.to('/admin/events/new')
+                'Nuevo evento', icon='add', on_click=lambda: ui.navigate.to('/staff/events/new')
             ).props('unelevated no-caps').classes(
                 'bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5'
             )
