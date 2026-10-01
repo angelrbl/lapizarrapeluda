@@ -32,12 +32,12 @@ def admin_page() -> None:
         def render_admin_tabs(value: ui.tab = events_tab):
             with ui.tab_panels(tabs, value=value).classes('w-full'):
                 with ui.tab_panel(club_tab):
-                    club_tab_page(club=club)
+                    club_tab_page(club=club, is_admin=is_admin)
 
                 with ui.tab_panel(squad_tab):
-                    squad_tab_page(club=club, on_change=lambda: render_admin_tabs.refresh(value=squad_tab))
+                    squad_tab_page(club=club, is_admin=is_admin, on_change=lambda: render_admin_tabs.refresh(value=squad_tab))
 
                 with ui.tab_panel(events_tab):
-                    events_tab_page(club=club, on_change=lambda: render_admin_tabs.refresh(value=events_tab))
+                    events_tab_page(club=club, is_admin=is_admin, on_change=lambda: render_admin_tabs.refresh(value=events_tab))
 
         render_admin_tabs()

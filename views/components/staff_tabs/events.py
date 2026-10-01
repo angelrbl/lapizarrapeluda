@@ -299,7 +299,7 @@ def open_event_detail(event_id: int) -> None:
     dialog.open()
 
 
-def events_tab_page(club: Club, on_change: callable):
+def events_tab_page(club: Club, on_change: callable, is_admin: bool = False):
     with ui.column().classes('w-full max-w-lg mx-auto min-h-screen p-4 gap-4'):
 
         events = list_events_for_club(club_id=club.id)

@@ -75,51 +75,53 @@ def handle_delete_club(
 
     return
 
-def club_tab_page(club: Club):
+def club_tab_page(club: Club, is_admin: bool = False):
     with ui.row().classes('mt-3 w-full items-center justify-between gap-5'):
         with ui.card().classes('w-full p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-none gap-2'):
             ui.label("Datos del club").classes('text-xl text-gray-900 font-bold')
             name = ui.input(
                 label="Nombre del club",
                 value=club.name,
-                placeholder="Por ejemplo, 'Grandiosa y Peluda'").classes('w-full').props('standout="bg-primary text-white"')
+                placeholder="Por ejemplo, 'Grandiosa y Peluda'").classes('w-full').props('standout="bg-primary text-white"' + ' disable' if not is_admin else '')
 
             error_label = ui.label(text="").classes('text-md text-negative hidden')
 
-            ui.button(
-                text="Guardar cambios",
-                on_click=lambda: handle_update_club_name(
-                    club_id=club.id,
-                    new_name=name.value,
-                    error_label=error_label
-                )
-            ).classes('w-full pt-3 pb-3 rounded-md font-bold')
+            if is_admin:
+                ui.button(
+                    text="Guardar cambios",
+                    on_click=lambda: handle_update_club_name(
+                        club_id=club.id,
+                        new_name=name.value,
+                        error_label=error_label
+                    )
+                ).classes('w-full pt-3 pb-3 rounded-md font-bold')
         
         with ui.card().classes('w-full p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-none gap-2 items-center pt-5 pb-5'):
             with ui.column().classes('items-center gap-1 text-center justify-between'):
                 ui.label(get_squad_length(club_id=club.id)).classes('text-4xl text-primary font-black')
                 ui.label("Jugadores en plantilla").classes('text-lg font-bold text-gray-900')
 
-        with ui.dropdown_button(text="Borrar club", icon="delete", split=False).classes('absolute left-1/2 -translate-x-1/2 mb-5 ' \
-        'pt-3 pb-3 rounded-md font-bold fixed bottom-0'):
-            with ui.column().classes("p-4 gap-1 w-full text-center mb-2"):
-                ui.label("Admin info").classes('text-md text-slate-500')
-                admin_name = ui.input(label="Usuario").classes('w-full').props('standout="bg-primary text-white"')
-                admin_password = ui.input(label="Contraseña", password=True, password_toggle_button=True).classes('w-full').props('standout="bg-primary text-white"')
-                admin_password_repeat = ui.input(label="Repetir contraseña", password=True, password_toggle_button=True).classes('w-full').props('standout="bg-primary text-white"')
+        if is_admin:
+            with ui.dropdown_button(text="Borrar club", icon="delete", split=False).classes('absolute left-1/2 -translate-x-1/2 mb-5 ' \
+            'pt-3 pb-3 rounded-md font-bold fixed bottom-0'):
+                with ui.column().classes("p-4 gap-1 w-full text-center mb-2"):
+                    ui.label("Admin info").classes('text-md text-slate-500')
+                    admin_name = ui.input(label="Usuario").classes('w-full').props('standout="bg-primary text-white"')
+                    admin_password = ui.input(label="Contraseña", password=True, password_toggle_button=True).classes('w-full').props('standout="bg-primary text-white"')
+                    admin_password_repeat = ui.input(label="Repetir contraseña", password=True, password_toggle_button=True).classes('w-full').props('standout="bg-primary text-white"')
 
-                error_label = ui.label(text="").classes('text-md text-negative hidden')
+                    error_label = ui.label(text="").classes('text-md text-negative hidden')
 
-                (
-                    ui.button(
-                        text="Borrar",
-                        on_click=lambda: handle_delete_club(
-                            club_id=club.id,
-                            admin_name=admin_name.value,
-                            admin_password=admin_password.value,
-                            admin_password_repeat=admin_password_repeat.value,
-                            error_label=error_label
+                    (
+                        ui.button(
+                            text="Borrar",
+                            on_click=lambda: handle_delete_club(
+                                club_id=club.id,
+                                admin_name=admin_name.value,
+                                admin_password=admin_password.value,
+                                admin_password_repeat=admin_password_repeat.value,
+                                error_label=error_label
+                            )
                         )
+                        .classes('w-full pt-3 pb-3 rounded-md font-bold')
                     )
-                    .classes('w-full pt-3 pb-3 rounded-md font-bold')
-                )

@@ -91,7 +91,7 @@ def handle_delete_user(user_id: int, on_change: callable) -> None:
     except ValueError as e:
         ui.notify("El usuario que intentas borrar no existe, prueba de nuevo.", type="negative")
 
-def squad_tab_page(club: Club, on_change: callable) -> None:
+def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> None:
     with ui.column().classes('w-full max-w-lg mx-auto min-h-screen p-4 gap-4'):
 
         squad = list_users_for_club(club_id=club.id)
