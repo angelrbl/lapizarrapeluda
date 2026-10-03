@@ -10,8 +10,8 @@ apply_theme()
 
 @ui.page('/')
 def index() -> None:
-    if not app.storage.user.get('club_id'):
-        ui.navigate.to('/create_club')
+    if not app.storage.user.get('user_id', None):
+        ui.navigate.to('/login')
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
