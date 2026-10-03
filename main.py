@@ -12,6 +12,8 @@ apply_theme()
 def index() -> None:
     if not app.storage.user.get('user_id', None):
         ui.navigate.to('/login')
+    else:
+        ui.navigate.to('/staff')
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
