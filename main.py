@@ -8,6 +8,10 @@ from views.theme import apply_theme
 init_db()
 apply_theme()
 
+@app.get('/ping')
+def ping():
+    return 'pong'
+
 @ui.page('/')
 def index() -> None:
     if not app.storage.user.get('user_id', None):
