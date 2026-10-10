@@ -3,7 +3,7 @@ from datetime import date, time, datetime, timedelta
 from sqlalchemy import select
 
 from core import get_session
-from models import Event, EventStatus, EventType, Slot
+from models import Event, EventStatus, EventType, Slot, User
 
 from services.club_service import get_club_by_name
 

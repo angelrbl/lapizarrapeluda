@@ -2,17 +2,19 @@ from datetime import date, timedelta
 
 from nicegui import ui
 
-from models import Club, EventStatus
-from services.availability_service import unavailability_counts_by_slot
+from models import Club, EventStatus, RoleType
+from services.availability_service import unavailability_counts_by_slot, get_slot_unavailable_users
 from services.event_service import (
     confirm_slot,
     delete_event,
     get_event_by_id,
     get_event_slots,
     list_events_for_club,
+    get_slot_by_id
 )
 from services.token_service import get_event_token
 from services.user_service import list_users_for_club
+from services.role_service import get_user_roles
 from views.layout import APP_BASE_URL
 from views.theme import mix_color
 
@@ -263,16 +265,13 @@ def open_event_detail(event_id: int, is_admin: bool = False) -> None:
 
                                 cell_classes = (
                                     "h-16 w-full min-w-0 rounded-xl flex flex-col items-center justify-center "
-                                    "text-white transition-transform relative shadow-sm"
+                                    "text-white transition-transform relative shadow-sm cursor-pointer hover:scale-[1.04]"
                                 )
                                 if is_confirmed_slot:
                                     cell_classes += " ring-2 ring-offset-2 ring-primary"
-                                if is_open:
-                                    cell_classes += " cursor-pointer hover:scale-[1.04]"
 
                                 cell = ui.element('div').classes(cell_classes).style(f'background:{bg} !important;')
-                                if is_open and is_admin:
-                                    cell.on('click', lambda s=slot: handle_confirm_slot(event_id, s.id, dialog))
+                                cell.on('click', lambda s=slot: see_slot_info(event_id, s.id, is_admin=is_admin, is_open=is_open))
                                 with cell:
                                     ui.label(str(count)).classes('text-lg font-bold leading-none')
                                     ui.label('baja' + ('s' if count != 1 else '')).classes(
@@ -283,10 +282,9 @@ def open_event_detail(event_id: int, is_admin: bool = False) -> None:
                                             'absolute top-1 right-1 text-white text-xs drop-shadow'
                                         )
 
-                if is_open and is_admin:
-                    ui.label('Toca una franja para confirmarla como horario definitivo.').classes(
-                        'text-xs text-gray-400 mt-1'
-                    )
+                ui.label('Toca una franja para ver su información.').classes(
+                    'text-xs text-gray-400 mt-1'
+                )
 
             render_grid()
 
@@ -298,6 +296,75 @@ def open_event_detail(event_id: int, is_admin: bool = False) -> None:
             ui.button('Cerrar', on_click=dialog.close).props('flat no-caps').classes('text-gray-600')
 
     dialog.open()
+
+def see_slot_info(event_id: int, slot_id: int, is_open, is_admin: bool = False):
+    event = get_event_by_id(event_id)
+    slot = get_slot_by_id(slot_id)
+    slot_users = get_slot_unavailable_users(slot_id)
+    confirmed_slot = event.confirmed_slot_id == slot_id
+
+    with ui.dialog() as dialog, ui.card().classes('w-full max-w-xl p-5 gap-3 rounded-2xl'):
+        with ui.row().classes('w-full justify-between items-center no-wrap'):
+            with ui.column().classes('gap-0'):
+                ui.label(event.title).classes('text-xl font-bold text-gray-900')
+                if event.opponent_name:
+                    ui.label(f"vs. {event.opponent_name}").classes('text-sm text-gray-500')
+
+        with ui.row().classes('w-full items-center justify-center gap-2 p-3 pl-0 bg-primary/10 rounded-lg'):
+            ui.icon('event_available').classes('text-primary text-lg')
+            ui.label(
+                f"Horario: {DIAS_ES[slot.day.weekday()].capitalize()} "
+                f"{slot.day:%d/%m} · {slot.start_time:%H:%M}"
+            ).classes('text-sm font-semibold text-primary')
+
+        if confirmed_slot:
+            with ui.row().classes('w-full items-center gap-2 bg-primary/10 rounded-lg'):
+                ui.icon("check").classes('size-sm text-secondary')
+                ui.label("El horario ha sido confirmado a esta hora.").classes('text-sm text-secondary')
+
+        ui.separator().classes('my-2')
+        ui.label(f"Bajas ({len(slot_users)}):").classes('font-bold text-gray-700 text-sm')
+
+        with ui.scroll_area().classes('w-full max-h-60 gap-2 pr-2'):
+            if not slot_users:
+                ui.label("Ninguna baja registrada para este horario.").classes('text-sm text-gray-400 italic py-2')
+            else:
+                for user in slot_users:
+                    user_roles = get_user_roles(user_id=user.id)
+
+                    with ui.card().classes('w-full p-3 bg-gray-50 border border-gray-200 rounded-xl shadow-none gap-1 mb-2'):
+                        with ui.row().classes('w-full justify-between items-start no-wrap'):
+                            with ui.row().classes('gap-1 items-center'):
+                                if RoleType.CAPTAIN in user_roles:
+                                    ui.label("C").classes('font-bold text-md text-primary')
+                                    ui.label("|").classes('font-black text-sm text-gray-900')
+
+                                if user.number:
+                                    ui.label(f"{user.number}").classes('font-black text-sm text-gray-900')
+                                    ui.label("|").classes('font-black text-sm text-gray-900')
+
+                                with ui.column().classes('gap-0'):
+                                    ui.label(user.name).classes('font-semibold text-gray-900 text-base leading-tight')
+                                    ui.label(user.email or '').classes('text-sm text-gray-500')
+
+                        roles_text = ", ".join(role.value.title() for role in user_roles)
+                        ui.label(roles_text).classes('text-xs font-medium text-gray-600')
+
+        ui.separator().classes('my-3 bg-gray-100')
+
+        with ui.row().classes('w-full items-center justify-between mt-1 gap-2'):
+            if is_admin and is_open:
+                ui.button('Confirmar evento', on_click=lambda: handle_confirm_slot(event_id, slot_id, dialog)).props(
+                    'unelevated no-caps'
+                ).classes('bg-red-50 text-red-600 hover:bg-red-100 font-semibold rounded-xl px-4 py-2')
+            else:
+                ui.element('div')
+
+            ui.button('Cerrar', on_click=dialog.close).props('flat no-caps').classes(
+                'text-gray-500 hover:text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-gray-100'
+            )
+
+    dialog.open()    
 
 
 def events_tab_page(club: Club, on_change: callable, is_admin: bool = False):

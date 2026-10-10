@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from core import get_session
-from models import Slot, Unavailability
+from models import Slot, Unavailability, User
 
 def set_unavailability(user_id: int, event_id: int, slot_ids: list[int]) -> None:
     with get_session() as session:
@@ -51,3 +51,21 @@ def unavailability_counts_by_slot(event_id: int) -> dict[int, int]:
             counts[slot.id] = count
 
         return counts
+
+def get_slot_unavailable_users(slot_id: int) -> list[User]:
+    if not slot_id:
+        return []
+    
+    with get_session() as session:
+        stmt = (
+            select(User)
+            .join(Unavailability, User.id == Unavailability.user_id)
+            .where(Unavailability.slot_id == slot_id)
+            .order_by(User.number.asc().nullslast())
+        )
+        users = session.scalars(stmt).all()
+        
+        for u in users:
+            session.expunge(u)
+            
+        return list(users)
