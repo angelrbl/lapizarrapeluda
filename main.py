@@ -1,4 +1,5 @@
 from nicegui import ui, app
+from fastapi.responses import PlainTextResponse
 import os
 
 from core import STORAGE_SECRET, init_db
@@ -8,7 +9,7 @@ from views.theme import apply_theme
 init_db()
 apply_theme()
 
-@app.get('/ping')
+@app.get('/ping', response_class=PlainTextResponse)
 def ping():
     return 'pong'
 
