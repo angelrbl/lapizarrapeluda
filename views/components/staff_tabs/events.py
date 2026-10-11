@@ -70,13 +70,12 @@ def confirm_delete_event(event_id: int, parent_dialog=None) -> None:
             )
     confirm_dialog.open()
 
-
 def open_best_slots_view(event, slots, baja_counts, total_users) -> None:
     if not slots:
         ui.notify('Este evento no tiene franjas candidatas.', type='warning')
         return
 
-    ranked = sorted(slots, key=lambda s: (baja_counts.get(s.id, 0), s.day, s.start_time))[:5]
+    ranked = sorted(slots, key=lambda s: (baja_counts.get(s.id, 0), s.day, s.start_time))[:10]
 
     with ui.dialog() as dialog, ui.card().tight().classes(
         'w-full max-w-sm rounded-[28px] overflow-hidden shadow-2xl'
@@ -92,58 +91,60 @@ def open_best_slots_view(event, slots, baja_counts, total_users) -> None:
                 'text-[11px] font-bold tracking-[0.25em] text-white/70 mt-3'
             )
 
-        with ui.column().classes('w-full gap-2.5 px-5 py-5 bg-white'):
-            for i, slot in enumerate(ranked):
-                count = baja_counts.get(slot.id, 0)
-                available = total_users - count if total_users else None
-                ratio = (available / total_users) if total_users else None
-                is_top = i == 0
-                rank_bg, rank_text, rank_icon = RANK_STYLE.get(i, ("bg-gray-200", "text-gray-600", None))
+        with ui.scroll_area().classes('w-full max-h-[330px] px-5 py-4 bg-white'):
+            with ui.column().classes('w-full gap-2.5'):
+                for i, slot in enumerate(ranked):
+                    count = baja_counts.get(slot.id, 0)
+                    available = total_users - count if total_users else None
+                    ratio = (available / total_users) if total_users else None
+                    is_top = i == 0
+                    rank_bg, rank_text, rank_icon = RANK_STYLE.get(i, ("bg-gray-200", "text-gray-600", None))
 
-                row_classes = (
-                    'w-full items-center justify-between p-3.5 rounded-2xl border no-wrap gap-3 transition-all'
-                )
-                row_classes += (
-                    ' bg-amber-50 border-amber-200 shadow-sm'
-                    if is_top
-                    else ' bg-gray-50 border-gray-100'
-                )
+                    row_classes = (
+                        'w-full items-center justify-between p-3.5 rounded-2xl border no-wrap gap-3 transition-all'
+                    )
+                    row_classes += (
+                        ' bg-amber-50 border-amber-200 shadow-sm'
+                        if is_top
+                        else ' bg-gray-50 border-gray-100'
+                    )
 
-                with ui.row().classes(row_classes):
-                    with ui.row().classes('items-center gap-3 no-wrap'):
-                        with ui.element('div').classes(
-                            f'w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 {rank_bg} {rank_text}'
-                        ):
-                            if rank_icon:
-                                ui.icon(rank_icon).classes('text-lg')
-                            else:
-                                ui.label(str(i + 1)).classes('text-sm font-black')
+                    with ui.row().classes(row_classes):
+                        with ui.row().classes('items-center gap-3 no-wrap'):
+                            with ui.element('div').classes(
+                                f'w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 {rank_bg} {rank_text}'
+                            ):
+                                if rank_icon:
+                                    ui.icon(rank_icon).classes('text-lg')
+                                else:
+                                    ui.label(str(i + 1)).classes('text-sm font-black')
 
-                        with ui.column().classes('gap-0'):
-                            ui.label(
-                                f"{DIAS_ES[slot.day.weekday()].capitalize()} {slot.day:%d/%m}"
-                            ).classes('text-sm font-bold text-gray-900 leading-tight')
-                            ui.label(f"{slot.start_time:%H:%M}").classes('text-xs text-gray-500')
+                            with ui.column().classes('gap-0'):
+                                ui.label(
+                                    f"{DIAS_ES[slot.day.weekday()].capitalize()} {slot.day:%d/%m}"
+                                ).classes('text-sm font-bold text-gray-900 leading-tight')
+                                ui.label(f"{slot.start_time:%H:%M}").classes('text-xs text-gray-500')
 
-                    with ui.column().classes('items-end gap-1 flex-shrink-0'):
-                        if total_users:
-                            ui.label(f"{available}/{total_users}").classes(
-                                'text-xs font-bold text-green-700'
-                            )
-                            with ui.element('div').classes('w-16 h-1.5 rounded-full bg-gray-200 overflow-hidden'):
-                                ui.element('div').classes('h-full rounded-full bg-green-500').style(
-                                    f'width:{ratio * 100:.0f}%;'
+                        with ui.column().classes('items-end gap-1 flex-shrink-0'):
+                            if total_users:
+                                ui.label(f"{available}/{total_users}").classes(
+                                    'text-xs font-bold text-green-700'
                                 )
-                        else:
-                            ui.label(f"{count} baja{'s' if count != 1 else ''}").classes(
-                                'text-xs font-semibold text-gray-500'
-                            )
+                                with ui.element('div').classes('w-16 h-1.5 rounded-full bg-gray-200 overflow-hidden'):
+                                    ui.element('div').classes('h-full rounded-full bg-green-500').style(
+                                        f'width:{ratio * 100:.0f}%;'
+                                    )
+                            else:
+                                ui.label(f"{count} baja{'s' if count != 1 else ''}").classes(
+                                    'text-xs font-semibold text-gray-500'
+                                )
 
+        with ui.row().classes('w-full justify-center px-5 py-4 bg-white border-t border-gray-100'):
             ui.button('Cerrar', on_click=dialog.close).props('flat no-caps').classes(
-                'self-center text-gray-500 -mb-1'
+                'text-gray-500 font-medium'
             )
-    dialog.open()
 
+    dialog.open()
 
 def open_event_detail(event_id: int, is_admin: bool = False) -> None:
     event = get_event_by_id(event_id)
