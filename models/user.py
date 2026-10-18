@@ -34,6 +34,11 @@ class User(Base):
     password_hash: Mapped[Optional[str]] = mapped_column()
 
     number: Mapped[Optional[int]] = mapped_column()
+    stats: Mapped["PlayerStats"] = relationship(
+        back_populates="player",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     club_id: Mapped[int] = mapped_column(ForeignKey("club.id"))
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -56,3 +61,22 @@ class User(Base):
 
     def __repr__(self):
         return f"User(id={self.id}, name={self.name})"
+
+class PlayerStats(Base):
+    __tablename__ = "player_stats"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    player_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id"),
+        unique=True,
+        nullable=False,
+    )
+
+    goals: Mapped[int] = mapped_column(default=0)
+    assists: Mapped[int] = mapped_column(default=0)
+    starter_amount: Mapped[int] = mapped_column(default=0)
+    yellow_cards: Mapped[int] = mapped_column(default=0)
+    red_cards: Mapped[int] = mapped_column(default=0)
+
+    player: Mapped["User"] = relationship(back_populates="stats")
