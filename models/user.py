@@ -68,7 +68,7 @@ class PlayerStats(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     player_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id"),
+        ForeignKey("user.id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
     )
@@ -78,5 +78,6 @@ class PlayerStats(Base):
     starter_amount: Mapped[int] = mapped_column(default=0)
     yellow_cards: Mapped[int] = mapped_column(default=0)
     red_cards: Mapped[int] = mapped_column(default=0)
+    mvp_count: Mapped[int] = mapped_column(default=0)
 
     player: Mapped["User"] = relationship(back_populates="stats")
