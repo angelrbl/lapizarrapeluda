@@ -37,7 +37,8 @@ def update_player_stats(
     assists: int, 
     starter_amount: int, 
     yellow_cards: int, 
-    red_cards: int
+    red_cards: int,
+    mvp_count: int
 ) -> PlayerStats:
     with get_session() as session:
         stats = session.scalars(select(PlayerStats).where(PlayerStats.player_id == player_id)).first()
@@ -50,6 +51,7 @@ def update_player_stats(
         stats.starter_amount = starter_amount
         stats.yellow_cards = yellow_cards
         stats.red_cards = red_cards
+        stats.mvp_count = mvp_count
         
         session.commit()
         session.refresh(stats)
