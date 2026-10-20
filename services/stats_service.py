@@ -20,13 +20,38 @@ def get_club_stats_ranking(club_id: int):
             session.expunge(u)
         return users
 
-def get_or_create_player_stats(user_id: int) -> PlayerStats:
+def get_player_stats(player_id: int) -> PlayerStats:
     with get_session() as session:
-        stats = session.scalars(select(PlayerStats).where(PlayerStats.player_id == user_id)).first()
+        stats = session.scalars(select(PlayerStats).where(PlayerStats.player_id == player_id)).first()
         if not stats:
-            stats = PlayerStats(player_id=user_id)
+            stats = PlayerStats(player_id=player_id)
             session.add(stats)
             session.commit()
             session.refresh(stats)
+        session.expunge(stats)
+        return stats
+
+def update_player_stats(
+    player_id: int, 
+    goals: int, 
+    assists: int, 
+    starter_amount: int, 
+    yellow_cards: int, 
+    red_cards: int
+) -> PlayerStats:
+    with get_session() as session:
+        stats = session.scalars(select(PlayerStats).where(PlayerStats.player_id == player_id)).first()
+        if not stats:
+            stats = PlayerStats(player_id=player_id)
+            session.add(stats)
+        
+        stats.goals = goals
+        stats.assists = assists
+        stats.starter_amount = starter_amount
+        stats.yellow_cards = yellow_cards
+        stats.red_cards = red_cards
+        
+        session.commit()
+        session.refresh(stats)
         session.expunge(stats)
         return stats
