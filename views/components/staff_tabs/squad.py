@@ -92,15 +92,17 @@ def handle_delete_user(user_id: int, on_change: callable) -> None:
     except ValueError as e:
         ui.notify("El usuario que intentas borrar no existe, prueba de nuevo.", type="negative")
 
-def open_player_stats_dialog(user: User, is_admin: bool, on_change: callable) -> None:
+def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_change: callable) -> None:
     stats = get_player_stats(user.id)
+    if is_captain:
+        print(user.name)
 
     with ui.dialog() as dialog, ui.card().classes('w-full max-w-md p-6 rounded-[28px] shadow-2xl bg-white gap-4'):
         
         with ui.row().classes('w-full items-center justify-between no-wrap'):
             with ui.row().classes('items-center gap-3'):
                 with ui.element('div').classes('w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 text-primary font-black text-lg'):
-                    ui.label(f"{user.number}" if user.number else "-")
+                    ui.label(("C | " if is_captain else "") + (f"{user.number}" if user.number else "-"))
                 with ui.column().classes('gap-0'):
                     ui.label(user.name).classes('text-lg font-bold text-gray-900 leading-tight')
             
@@ -150,10 +152,13 @@ def open_player_stats_dialog(user: User, is_admin: bool, on_change: callable) ->
                 ui.button('Guardar cambios', on_click=handle_save).props('unelevated no-caps').classes('bg-primary text-white font-bold rounded-xl px-4')
         else:
             with ui.column().classes('w-full gap-3 py-3'):
-                def stat_row(icon, label, value, color="text-primary"):
+                def stat_row(icon, label, value, color="text-primary", is_image=False):
                     with ui.row().classes('w-full items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100'):
                         with ui.row().classes('items-center gap-2'):
-                            ui.icon(icon).classes('text-primary text-base')
+                            if is_image:
+                                ui.image(icon).classes('size-5')
+                            else:
+                                ui.icon(icon).classes('text-primary text-base')
                             ui.label(label).classes('text-sm font-medium text-gray-600')
                         ui.label(str(value)).classes(f'text-base font-black {color}')
 
@@ -162,7 +167,7 @@ def open_player_stats_dialog(user: User, is_admin: bool, on_change: callable) ->
                 stat_row('person', 'Titularidades', stats.starter_amount)
                 stat_row('style', 'Tarjetas Amarillas', stats.yellow_cards)
                 stat_row('style', 'Tarjetas Rojas', stats.red_cards)
-                stat_row('style', 'Jugador Estrella Damm', stats.mvp_count, 'text-amber-600')
+                stat_row('static/estrella-damm.png', 'Jugador Estrella Damm', stats.mvp_count, 'text-amber-600', True)
 
             with ui.row().classes('w-full justify-end mt-2'):
                 ui.button('Cerrar', on_click=dialog.close).props('unelevated no-caps').classes('bg-gray-100 text-gray-700 font-bold px-5 py-2 rounded-xl')
@@ -212,7 +217,8 @@ def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> N
 
             with ui.card().classes('w-full p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-none gap-2 ' + ("cursor-pointer" if RoleType.PLAYER in user_roles else "")) as card:
                 if RoleType.PLAYER in user_roles:
-                    card.on('click', lambda usr=user: open_player_stats_dialog(user=usr, is_admin=is_admin, on_change=on_change))
+                    is_captain = True if RoleType.CAPTAIN in user_roles else False
+                    card.on('click', lambda usr=user, is_c=is_captain: open_player_stats_dialog(user=usr, is_admin=is_admin, is_captain=is_c, on_change=on_change))
                 
                 with ui.row().classes('w-full justify-between items-start no-wrap'):
                     with ui.row().classes('gap-1'):
