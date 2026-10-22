@@ -4,7 +4,7 @@ from core import get_session
 from models import User, PlayerStats, UserRole, RoleType
 
 def get_club_stats_ranking(club_id: int):
-    with get_session as session:
+    with get_session() as session:
         stmt = (
             select(User)
             .options(joinedload(User.stats))

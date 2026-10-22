@@ -4,5 +4,6 @@ from views.pages import (
     login,
     staff,
     event,
-    activate
+    activate,
+    stats
 )

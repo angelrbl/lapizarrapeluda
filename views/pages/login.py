@@ -53,8 +53,10 @@ def login_page(club_name: str | None = None) -> None:
 
     with frame(navigation_title="Iniciar Sesión"):
         if not club:
-            ui.label("Club no encontrado.").classes("text-3xl font-black text-negative")
-            ui.label("No se ha encontrado ningún club con ese nombre.").classes('text-xl font-bold text-slate-700')
+            with ui.column().classes('w-full items-center justify-center min-h-[60vh] p-6 text-center gap-2'):
+                ui.label("¡Qué lástima!").classes("text-3xl font-black text-negative")
+                ui.label("No se ha encontrado ningún club con ese nombre.").classes('text-xl font-bold text-slate-700')
+            return
 
         with ui.column().classes("items-center gap-5 sm:gap-10 w-full text-center sm:mt-10"):
             ui.image('static/badge.png').classes('size-25')
