@@ -113,11 +113,12 @@ def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_ch
         if is_admin:
             with ui.column().classes('w-full gap-3 py-2'):
                 with ui.row().classes('w-full gap-3'):
-                    in_goals = ui.number(label="Goles", value=stats.goals, min=0).classes('flex-1').props('outlined dense')
-                    in_assists = ui.number(label="Asistencias", value=stats.assists, min=0).classes('flex-1').props('outlined dense')
+                    in_pj = ui.number(label="Partidos Jugados", value=stats.matches_played, min=0).classes('flex-1').props('outlined dense')
+                    in_starter = ui.number(label="Titularidades", value=stats.starter_amount, min=0).classes('flex-1').props('outlined dense')
                 
                 with ui.row().classes('w-full gap-3'):
-                    in_starter = ui.number(label="Titularidades", value=stats.starter_amount, min=0).classes('flex-1').props('outlined dense')
+                    in_goals = ui.number(label="Goles", value=stats.goals, min=0).classes('flex-1').props('outlined dense')
+                    in_assists = ui.number(label="Asistencias", value=stats.assists, min=0).classes('flex-1').props('outlined dense')
                 
                 with ui.row().classes('w-full gap-3'):
                     in_yellow = ui.number(label="Tarjetas Amarillas", value=stats.yellow_cards, min=0).classes('flex-1').props('outlined dense')
@@ -135,6 +136,7 @@ def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_ch
                     try:
                         update_player_stats(
                             player_id=user.id,
+                            matches_played=int(in_pj.value or 0),
                             goals=int(in_goals.value or 0),
                             assists=int(in_assists.value or 0),
                             starter_amount=int(in_starter.value or 0),
@@ -162,6 +164,7 @@ def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_ch
                             ui.label(label).classes('text-sm font-medium text-gray-600')
                         ui.label(str(value)).classes(f'text-base font-black {color}')
 
+                stat_row('sports', 'Partidos Jugados', stats.matches_played)
                 stat_row('sports_soccer', 'Goles', stats.goals)
                 stat_row('handshake', 'Asistencias', stats.assists)
                 stat_row('person', 'Titularidades', stats.starter_amount)

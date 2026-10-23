@@ -73,9 +73,10 @@ class PlayerStats(Base):
         nullable=False,
     )
 
+    matches_played: Mapped[int] = mapped_column(default=0)
+    starter_amount: Mapped[int] = mapped_column(default=0)
     goals: Mapped[int] = mapped_column(default=0)
     assists: Mapped[int] = mapped_column(default=0)
-    starter_amount: Mapped[int] = mapped_column(default=0)
     yellow_cards: Mapped[int] = mapped_column(default=0)
     red_cards: Mapped[int] = mapped_column(default=0)
     mvp_count: Mapped[int] = mapped_column(default=0)

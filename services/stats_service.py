@@ -32,10 +32,11 @@ def get_player_stats(player_id: int) -> PlayerStats:
         return stats
 
 def update_player_stats(
-    player_id: int, 
+    player_id: int,
+    matches_played: int, 
+    starter_amount: int, 
     goals: int, 
     assists: int, 
-    starter_amount: int, 
     yellow_cards: int, 
     red_cards: int,
     mvp_count: int
@@ -45,10 +46,11 @@ def update_player_stats(
         if not stats:
             stats = PlayerStats(player_id=player_id)
             session.add(stats)
-        
+
+        stats.matches_played = matches_played
+        stats.starter_amount = starter_amount
         stats.goals = goals
         stats.assists = assists
-        stats.starter_amount = starter_amount
         stats.yellow_cards = yellow_cards
         stats.red_cards = red_cards
         stats.mvp_count = mvp_count
