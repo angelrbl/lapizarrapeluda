@@ -97,7 +97,7 @@ def stats_page(club_name: str | None = None) -> None:
             render_top_section('Top 3 Goleadores', scorers, lambda p: p.stats.goals, 'sports_soccer')
             render_top_section('Top 3 Asistentes', assistants, lambda p: p.stats.assists, 'handshake')
             render_top_section('Top 3 Estrellas Damm', mvps, lambda p: getattr(p.stats, 'mvp_count', 0), 'star', 'text-amber-500')
-            render_top_section('Top 3 Más Amarillas', yellows_list, lambda p: p.stats.yellow_cards, 'style')
+            render_top_section('Top 3 Más Amarillas', yellows_list, lambda p: p.stats.yellow_cards, 'style', 'text-amber-300')
             render_top_section('Top 3 Más Rojas', reds_list, lambda p: p.stats.red_cards, 'style')
 
             ui.label('Plantilla').classes('text-xs font-bold text-gray-400 uppercase tracking-wider mt-3 mb-1')
