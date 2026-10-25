@@ -65,6 +65,7 @@ def stats_page(club_name: str | None = None) -> None:
 
             scorers = sorted(valid_players, key=lambda p: p.stats.goals, reverse=True)
             assistants = sorted(valid_players, key=lambda p: p.stats.assists, reverse=True)
+            gplusa = sorted(valid_players, key=lambda p: (p.stats.assists + p.stats.goals), reverse=True)
             mvps = sorted(valid_players, key=lambda p: getattr(p.stats, 'mvp_count', 0), reverse=True)
             yellows_list = sorted(valid_players, key=lambda p: p.stats.yellow_cards, reverse=True)
             reds_list = sorted(valid_players, key=lambda p: p.stats.red_cards, reverse=True)
@@ -96,6 +97,7 @@ def stats_page(club_name: str | None = None) -> None:
 
             render_top_section('Top 3 Goleadores', scorers, lambda p: p.stats.goals, 'sports_soccer')
             render_top_section('Top 3 Asistentes', assistants, lambda p: p.stats.assists, 'handshake')
+            render_top_section('Top 3 G + A', gplusa, lambda p: (p.stats.assists + p.stats.goals), 'whatshot')
             render_top_section('Top 3 Estrellas Damm', mvps, lambda p: getattr(p.stats, 'mvp_count', 0), 'star', 'text-amber-500')
             render_top_section('Top 3 Más Amarillas', yellows_list, lambda p: p.stats.yellow_cards, 'style', 'text-amber-300')
             render_top_section('Top 3 Más Rojas', reds_list, lambda p: p.stats.red_cards, 'style')
