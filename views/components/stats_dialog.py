@@ -21,19 +21,19 @@ def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_ch
         if is_admin:
             with ui.column().classes('w-full gap-3 py-2'):
                 with ui.row().classes('w-full gap-3'):
-                    in_pj = ui.number(label="Partidos Jugados", value=stats.matches_played, min=0).classes('flex-1').props('outlined dense')
-                    in_starter = ui.number(label="Titularidades", value=stats.starter_amount, min=0).classes('flex-1').props('outlined dense')
+                    in_pj = ui.number(label="Partidos Jugados", value=stats.matches_played, min=0).classes('flex-1').props('standout="bg-primary text-white"')
+                    in_starter = ui.number(label="Titularidades", value=stats.starter_amount, min=0).classes('flex-1').props('standout="bg-primary text-white"')
                 
                 with ui.row().classes('w-full gap-3'):
-                    in_goals = ui.number(label="Goles", value=stats.goals, min=0).classes('flex-1').props('outlined dense')
-                    in_assists = ui.number(label="Asistencias", value=stats.assists, min=0).classes('flex-1').props('outlined dense')
+                    in_goals = ui.number(label="Goles", value=stats.goals, min=0).classes('flex-1').props('standout="bg-primary text-white"')
+                    in_assists = ui.number(label="Asistencias", value=stats.assists, min=0).classes('flex-1').props('standout="bg-primary text-white"')
                 
                 with ui.row().classes('w-full gap-3'):
-                    in_yellow = ui.number(label="Tarjetas Amarillas", value=stats.yellow_cards, min=0).classes('flex-1').props('outlined dense')
-                    in_red = ui.number(label="Tarjetas Rojas", value=stats.red_cards, min=0).classes('flex-1').props('outlined dense')
+                    in_yellow = ui.number(label="Tarjetas Amarillas", value=stats.yellow_cards, min=0).classes('flex-1').props('standout="bg-primary text-white"')
+                    in_red = ui.number(label="Tarjetas Rojas", value=stats.red_cards, min=0).classes('flex-1').props('standout="bg-primary text-white"')
                 
                 with ui.row().classes('w-full gap-3'):
-                    in_mvp = ui.number(label="Jugador Estrella Damm", value=stats.mvp_count, min=0).classes('flex-1').props('outlined dense')
+                    in_mvp = ui.number(label="Jugador Estrella Damm", value=stats.mvp_count, min=0).classes('flex-1').props('standout="bg-primary text-white"')
 
                 error_label = ui.label("").classes('text-xs text-negative hidden')
 
