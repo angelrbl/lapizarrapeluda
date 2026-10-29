@@ -53,8 +53,10 @@ def stats_page(club_name: str | None = None) -> None:
 
         with ui.column().classes('w-full max-w-lg mx-auto min-h-screen p-4 gap-4 bg-white'):
             
-            with ui.row().classes('w-full justify-between items-end mb-1'):
-                ui.label('Estadísticas').classes('text-2xl font-bold text-gray-900')
+            with ui.row().classes('w-full justify-between items-center mb-1'):
+                with ui.column().classes('items-start gap-1'):
+                    ui.label('Estadísticas').classes('text-2xl font-bold text-gray-900')
+                    ui.label(club.name).classes('text-xs font-bold text-gray-400 uppercase tracking-wider')
                 ui.image('static/badge.png').classes('size-10')
 
             if not players:
