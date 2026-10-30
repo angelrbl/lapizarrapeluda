@@ -75,7 +75,7 @@ def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_ch
                 stat_row('sports', 'Partidos Jugados', stats.matches_played)
                 stat_row('person', 'Titularidades', stats.starter_amount)
                 stat_row('sports_soccer', 'Goles', stats.goals)
-                stat_row('handshake', 'Asistencias', stats.assists)
+                stat_row('static/cleat.svg', 'Asistencias', stats.assists, is_image=True)
                 stat_row('style', 'Tarjetas Amarillas', stats.yellow_cards)
                 stat_row('style', 'Tarjetas Rojas', stats.red_cards)
                 stat_row('static/estrella-damm.png', 'Jugador Estrella Damm', stats.mvp_count, 'text-amber-600', True)

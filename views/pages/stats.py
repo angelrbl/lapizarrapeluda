@@ -72,12 +72,15 @@ def stats_page(club_name: str | None = None) -> None:
             yellows_list = sorted(valid_players, key=lambda p: p.stats.yellow_cards, reverse=True)
             reds_list = sorted(valid_players, key=lambda p: p.stats.red_cards, reverse=True)
 
-            def render_top_section(title, full_list, metric_getter, icon, color_class="text-primary"):
+            def render_top_section(title, full_list, metric_getter, icon: str, color_class="text-primary"):
                 top_3 = full_list[:3]
                 with ui.column().classes('w-full gap-2 mb-1'):
                     with ui.row().classes('w-full justify-between items-center'):
                         with ui.row().classes('items-center gap-1.5'):
-                            ui.icon(icon, size='xs').classes(color_class)
+                            if icon.startswith('static/'):
+                                ui.image(icon).classes('size-5')
+                            else:
+                                ui.icon(icon, size='xs').classes(color_class)
                             ui.label(title).classes('text-xs font-bold text-gray-400 uppercase tracking-wider')
                         
                         if len(full_list) > 0:
@@ -98,7 +101,7 @@ def stats_page(club_name: str | None = None) -> None:
                                     ui.label(str(val)).classes('text-sm font-black text-gray-900')
 
             render_top_section('Top 3 Goleadores', scorers, lambda p: p.stats.goals, 'sports_soccer')
-            render_top_section('Top 3 Asistentes', assistants, lambda p: p.stats.assists, 'handshake')
+            render_top_section('Top 3 Asistentes', assistants, lambda p: p.stats.assists, 'static/cleat.svg')
             render_top_section('Top 3 G + A', gplusa, lambda p: (p.stats.assists + p.stats.goals), 'whatshot')
             render_top_section('Top 3 Estrellas Damm', mvps, lambda p: getattr(p.stats, 'mvp_count', 0), 'star', 'text-amber-500')
             render_top_section('Top 3 Más Amarillas', yellows_list, lambda p: p.stats.yellow_cards, 'style', 'text-amber-300')
@@ -155,7 +158,7 @@ def stats_page(club_name: str | None = None) -> None:
                                 ui.label(str(goals)).classes('font-bold text-primary')
                             
                             with ui.row().classes('items-center gap-0.5'):
-                                ui.icon('handshake', size='xs')
+                                ui.image('static/cleat_gray.svg').classes('size-5')
                                 ui.label(str(assists)).classes('text-primary')
 
                             if yellows > 0 or reds > 0:
