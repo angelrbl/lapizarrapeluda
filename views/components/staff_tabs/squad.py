@@ -7,7 +7,7 @@ from services.role_service import get_user_roles, set_user_roles
 from services.token_service import create_activation_token
 
 from views.layout import APP_BASE_URL
-from views.components.stats_dialog import open_player_stats_dialog
+from views.components.stats_dialog import open_player_stats_dialog, open_fast_registration_dialog
 
 def handle_create_activation_link(user: User) -> None:
     if user.is_active:
@@ -129,6 +129,12 @@ def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> N
                             )
                             .classes('w-full pt-3 pb-3 rounded-md font-bold')
                         )
+
+            if app.storage.user.get('is_admin', False):
+                ui.button('Registro rápido', icon='bolt', on_click=lambda: open_fast_registration_dialog(
+                    club_id=club.id,
+                    on_success=lambda: ui.navigate.to(f'/{club.name}/stats' if club.name else '/stats')
+                )).props('outline dense no-caps').classes('text-xs text-primary border-primary')
 
         for user in squad:
             user_roles = get_user_roles(user_id=user.id)

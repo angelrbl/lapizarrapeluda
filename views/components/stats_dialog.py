@@ -2,7 +2,7 @@ from nicegui import app, ui
 
 from services.stats_service import get_player_stats, update_player_stats
 from services.stats_service import increment_stat
-from services.user_service import get_club_players
+from services.user_service import list_users_for_club
 
 def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_change: callable) -> None:
     stats = get_player_stats(user.id)
@@ -98,7 +98,7 @@ STAT_LABELS = {
 }
 
 def open_fast_registration_dialog(club_id: int, on_success: callable):
-    players = get_club_players(club_id)
+    players = list_users_for_club(club_id)
 
     with ui.dialog() as dialog, ui.card().classes('w-full max-w-md p-6 rounded-2xl shadow-xl bg-white gap-4'):
         
