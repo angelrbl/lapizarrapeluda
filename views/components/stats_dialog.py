@@ -1,8 +1,10 @@
 from nicegui import app, ui
 
+from models import RoleType
+
+from services.role_service import get_user_roles
 from services.stats_service import get_player_stats, update_player_stats
-from services.stats_service import increment_stat
-from services.user_service import list_users_for_club
+from services.stats_service import increment_stat, get_club_stats_ranking
 
 def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_change: callable) -> None:
     stats = get_player_stats(user.id)
@@ -88,17 +90,17 @@ def open_player_stats_dialog(user: User, is_admin: bool, is_captain: bool, on_ch
     dialog.open()
 
 STAT_LABELS = {
-    'matches_played': 'Partidos jugados (+1 PJ)',
-    'starter_amount': 'Titularidades (+1 PT)',
-    'goals': 'Goles (+1 Gol)',
-    'assists': 'Asistencias (+1 Asist.)',
-    'yellow_cards': 'Tarjetas amarillas (+1 Amarilla)',
-    'red_cards': 'Tarjetas rojas (+1 Roja)',
-    'mvp_count': 'Jugador Estrella Damm (+1 MVP)'
+    'matches_played': 'Partidos jugados',
+    'starter_amount': 'Titularidades',
+    'goals': 'Goles',
+    'assists': 'Asistencias',
+    'yellow_cards': 'Amarillas',
+    'red_cards': 'Rojas',
+    'mvp_count': 'Jugador Estrella Damm'
 }
 
 def open_fast_registration_dialog(club_id: int, on_success: callable):
-    players = list_users_for_club(club_id)
+    players = get_club_stats_ranking(club_id)
 
     with ui.dialog() as dialog, ui.card().classes('w-full max-w-md p-6 rounded-2xl shadow-xl bg-white gap-4'):
         
@@ -112,10 +114,10 @@ def open_fast_registration_dialog(club_id: int, on_success: callable):
             options=STAT_LABELS, 
             label="Métrica a actualizar",
             value='matches_played'
-        ).classes('w-full').props('outlined dense')
+        ).classes('w-full').props('standout="bg-primary text-white"')
 
         with ui.row().classes('w-full justify-between items-center mt-2'):
-            ui.label("Jugadores participantes").classes('text-xs font-bold text-gray-400 uppercase tracking-wider')
+            ui.label("Jugadores").classes('text-xs font-bold text-gray-400 uppercase tracking-wider')
             
             all_selected = False
             checkboxes = {}
@@ -128,18 +130,23 @@ def open_fast_registration_dialog(club_id: int, on_success: callable):
 
             ui.button('Seleccionar todos', on_click=toggle_all).props('flat dense no-caps').classes('text-xs text-primary font-semibold')
 
-        with ui.column().classes('w-full gap-2 max-h-[320px] overflow-y-auto border border-gray-100 rounded-xl p-2 bg-gray-50'):
+        with ui.column().classes('w-full gap-2 max-h-[320px] overflow-y-auto rounded-xl p-1'):
             if not players:
                 ui.label('No hay jugadores en el club.').classes('text-sm text-gray-400 italic p-2')
             else:
                 for p in players:
-                    with ui.row().classes('w-full items-center justify-between p-2.5 bg-white rounded-lg border border-gray-100'):
+                    with ui.row().classes('w-full items-center justify-between p-4 rounded-lg border border-gray-100 bg-gray-50'):
                         with ui.row().classes('items-center gap-2.5'):
+                            user_roles = get_user_roles(p.id)
+                            if RoleType.CAPTAIN in user_roles:
+                                ui.label("C").classes('font-bold text-md text-primary')
+                                ui.label("|").classes('font-black text-sm text-gray-900')
+    
                             if p.number:
-                                ui.label(f"#{p.number}").classes('font-black text-xs text-gray-800 w-6')
-                            else:
-                                ui.label('-').classes('font-bold text-xs text-gray-400 w-6 text-center')
-                            ui.label(p.name).classes('font-semibold text-sm text-gray-900 truncate max-w-[200px]')
+                                ui.label(f"{p.number}").classes('font-black text-sm text-gray-900')
+                                ui.label("|").classes('font-black text-sm text-gray-900')
+                        
+                            ui.label(p.name).classes('font-semibold text-gray-900 text-base leading-tight truncate')
                         
                         cb = ui.checkbox().props('dense')
                         checkboxes[p.id] = cb
