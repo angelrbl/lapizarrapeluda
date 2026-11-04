@@ -7,7 +7,7 @@ from services.role_service import get_user_roles, set_user_roles
 from services.token_service import create_activation_token
 
 from views.layout import APP_BASE_URL
-from views.components.stats_dialog import open_player_stats_dialog
+from views.components.stats_dialog import open_player_stats_dialog, open_fast_registration_dialog
 
 def handle_create_activation_link(user: User) -> None:
     if user.is_active:
@@ -136,9 +136,10 @@ def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> N
             with ui.card().classes('w-full p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-none gap-2 ' + ("cursor-pointer" if RoleType.PLAYER in user_roles else "")) as card:
                 if RoleType.PLAYER in user_roles:
                     is_captain = True if RoleType.CAPTAIN in user_roles else False
-                    card.on('click', lambda usr=user, is_c=is_captain: open_player_stats_dialog(user=usr, is_admin=is_admin, is_captain=is_c, on_change=on_change))
                 
-                with ui.row().classes('w-full justify-between items-start no-wrap'):
+                with ui.row().classes('w-full justify-between items-start no-wrap') as row:
+                    row.on('click', lambda usr=user, is_c=is_captain: open_player_stats_dialog(user=usr, is_admin=is_admin, is_captain=is_c, on_change=on_change))
+
                     with ui.row().classes('gap-1'):
                         if RoleType.CAPTAIN in user_roles:
                             ui.label("C").classes('font-bold text-md text-primary')
@@ -218,3 +219,13 @@ def squad_tab_page(club: Club, on_change: callable, is_admin: bool = False) -> N
                                             )
                                         )
                                     )
+
+        with ui.row().classes('w-full justify-center items-center mb-2 mt-2'):
+            ui.button('Estadísticas', icon='bar_chart', on_click=lambda: ui.navigate.to(f'/{club.name}/stats' if club.name else '/stats')
+            ).props('unelevated no-caps').classes('bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5')
+
+            if is_admin:
+                ui.button('Registro rápido', icon='bolt', on_click=lambda: open_fast_registration_dialog(
+                    club_id=club.id,
+                    on_success=lambda: ui.navigate.to(f'/{club.name}/stats' if club.name else '/stats')
+                )).props('unelevated no-caps').classes('bg-primary text-white hover:bg-secondary text-sm font-medium rounded-lg px-3 py-1.5')
