@@ -4,7 +4,7 @@ from nicegui import app, ui
 
 from models import EventType
 
-from services.event_service import create_event, generate_slots
+from services.event_service import create_event, generate_slots, list_events_for_club
 from services.token_service import create_event_token
 from services.user_service import get_user_by_id
 
@@ -29,8 +29,15 @@ def new_event_page():
     selected_weekdays: set[int] = {0, 1, 2, 3, 4}
     weekday_buttons: dict[int, ui.button] = {}
 
+    # Obtenemos los eventos anteriores del club para el selector de plantilla
+    previous_events = list_events_for_club(club_id)
+    event_options = {
+        e.id: f"{e.title} {f'vs {e.opponent_name}' if e.opponent_name else ''} ({e.date.strftime('%d/%m/%Y') if e.response_deadline else 'Sin fecha'})"
+        for e in previous_events
+    }
+
     with frame(navigation_title="Crear evento"):
-        with ui.column().classes("w-full p-4 gap-2"):
+        with ui.column().classes("w-full p-4 gap-2 max-w-xl mx-auto"):
             ui.label("← Volver a staff").classes('text-primary text-md hover:text-primary/90 cursor-pointer').on('click', lambda: ui.navigate.to('/staff'))
             ui.label("Nuevo evento").classes("text-3xl text-primary font-bold mt-3")
 
@@ -39,6 +46,13 @@ def new_event_page():
                 {t.value: t.value.replace('_', " ").title() for t in EventType}, value=EventType.GAME.value, label="Tipo"
             ).classes("w-full").props('standout="bg-primary text-white"')
             opponent_input = ui.input("Rival (opcional)").classes("w-full").props('standout="bg-primary text-white"')
+
+            # NUEVO: Selector opcional de evento base para precargar bajas
+            base_event_select = ui.select(
+                options=event_options,
+                label="Precargar bajas desde un evento anterior (Opcional)",
+                clearable=True
+            ).classes("w-full").props('standout="bg-primary text-white"')
 
             ui.label("Franjas candidatas").classes("font-bold text-lg mt-6 text-gray-900")
 
@@ -142,17 +156,26 @@ def new_event_page():
                 error_label.text = "Revisa la horquilla de fechas, los días y la ventana horaria: no se generaría ninguna franja."
                 return
 
-            event = create_event(
-                club_id=club_id,
-                title=title_input.value,
-                event_type=EventType(type_input.value),
-                slots=slots,
-                opponent_name=opponent_input.value or None,
-            )
-            create_event_token(event.id)
-            ui.notify(f"Evento creado con {len(slots)} franjas", color="positive")
-            ui.navigate.to("/staff")
+            try:
+                event, unavs_count, players_count = create_event(
+                    club_id=club_id,
+                    title=title_input.value,
+                    event_type=EventType(type_input.value),
+                    slots=slots,
+                    opponent_name=opponent_input.value or None,
+                    base_event_id=base_event_select.value
+                )
+                create_event_token(event.id)
+                
+                if unavs_count > 0:
+                    ui.notify(f"Evento creado con {len(slots)} franjas. Se han precargado {unavs_count} bajas de {players_count} jugadores.", color="positive")
+                else:
+                    ui.notify(f"Evento creado con {len(slots)} franjas", color="positive")
+                
+                ui.navigate.to("/staff")
+            except Exception as e:
+                error_label.text = "Error al crear el evento. Revisa los datos."
 
-        with ui.row().classes("justify-end w-full mt.4 gap-2"):
+        with ui.row().classes("justify-end w-full max-w-xl mx-auto mt-4 gap-2"):
             ui.button("Cancelar", on_click=lambda: ui.navigate.to("/staff")).props("flat")
             ui.button("Crear evento", on_click=save).props("color=primary")
