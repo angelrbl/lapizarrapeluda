@@ -58,44 +58,45 @@ def create_event(
         unavs_by_base_slot = {}
         active_club_player_ids = set()
 
-        # 1. Si hay evento base, validamos restricciones temporales y de club
         if base_event_id:
-            base_event = session.get(Event, base_event_id)
-            base_slots = session.scalars(select(Slot).where(Slot.event_id == base_event_id)).all()
+            try:
+                base_event_id_int = int(base_event_id)
+            except (TypeError, ValueError):
+                base_event_id_int = None
 
-            if not base_event or base_event.club_id != club_id:
-                raise ValueError("error_base_event_not_found")
-            
-            if base_slots:
-                min_new_date = min(s[0] for s in slots)
-                max_base_date = max(bs.day for bs in base_slots)
+            if base_event_id_int:
+                base_event = session.get(Event, base_event_id_int)
+                if not base_event or base_event.club_id != club_id:
+                    raise ValueError("error_base_event_not_found")
                 
-                # El evento base debe ser estrictamente anterior al nuevo
-                if max_base_date >= min_new_date:
-                    raise ValueError("error_base_event_must_be_earlier")
-
-                # Obtener jugadores activos del club para evitar fantasmas
-                active_club_player_ids = {
-                    u.id for u in session.scalars(
-                        select(User).where(User.club_id == club_id, User.is_active == True)
+                base_slots = session.scalars(select(Slot).where(Slot.event_id == base_event_id_int)).all()
+                if base_slots:
+                    # Obtenemos los usuarios del club y filtramos de forma segura:
+                    # Solo se excluye si is_active es explícitamente False. Si es True o no está definido, se incluye.
+                    club_users = session.scalars(
+                        select(User).where(User.club_id == club_id)
                     ).all()
-                }
+                    active_club_player_ids = {
+                        u.id for u in club_users 
+                        if getattr(u, 'is_active', True) is not False
+                    }
 
-                # Mapear slots del evento base por clave de equivalencia: (weekday, start_time, end_time)
-                for bs in base_slots:
-                    key = (bs.day.weekday(), bs.start_time, bs.end_time)
-                    base_slot_map[key] = bs.id
+                    # Mapear slots base por: (Día de la semana 0-6, hora inicio, hora fin)
+                    for bs in base_slots:
+                        base_weekday = bs.day.weekday() if hasattr(bs.day, 'weekday') else bs.day
+                        key = (base_weekday, bs.start_time, bs.end_time)
+                        base_slot_map[key] = bs.id
 
-                base_slot_ids = list(base_slot_map.values())
-                if base_slot_ids:
-                    base_unavailabilities = session.scalars(
-                        select(Unavailability).where(Unavailability.slot_id.in_(base_slot_ids))
-                    ).all()
-                    for unav in base_unavailabilities:
-                        if unav.user_id in active_club_player_ids:
-                            unavs_by_base_slot.setdefault(unav.slot_id, []).append(unav.user_id)
+                    base_slot_ids = list(base_slot_map.values())
+                    if base_slot_ids:
+                        base_unavailabilities = session.scalars(
+                            select(Unavailability).where(Unavailability.slot_id.in_(base_slot_ids))
+                        ).all()
+                        for unav in base_unavailabilities:
+                            if unav.user_id in active_club_player_ids:
+                                unavs_by_base_slot.setdefault(unav.slot_id, []).append(unav.user_id)
 
-        # 2. Crear el nuevo evento base
+        # Crear el nuevo evento
         event = Event(
             club_id=club_id,
             title=title,
@@ -113,14 +114,15 @@ def create_event(
         preloaded_unavs_count = 0
         preloaded_players_set = set()
 
-        # 3. Crear franjas y cruzar indisponibilidades si procede
-        for day, start, end in slots:
-            new_slot = Slot(event_id=event.id, day=day, start_time=start, end_time=end)
+        # Crear franjas y cruzar indisponibilidades por patrón semanal
+        for day_date, start, end in slots:
+            new_slot = Slot(event_id=event.id, day=day_date, start_time=start, end_time=end)
             session.add(new_slot)
             session.flush()
 
             if base_event_id:
-                key = (day.weekday(), start, end)
+                new_weekday = day_date.weekday() if hasattr(day_date, 'weekday') else day_date
+                key = (new_weekday, start, end)
                 matching_base_slot_id = base_slot_map.get(key)
 
                 if matching_base_slot_id and matching_base_slot_id in unavs_by_base_slot:
@@ -134,7 +136,7 @@ def create_event(
         session.expunge(event)
         
         return event, preloaded_unavs_count, len(preloaded_players_set)
-    
+
 def delete_event(event_id: int) -> bool:
     with get_session() as session:
         event = session.get(Event, event_id)

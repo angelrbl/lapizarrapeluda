@@ -29,7 +29,6 @@ def new_event_page():
     selected_weekdays: set[int] = {0, 1, 2, 3, 4}
     weekday_buttons: dict[int, ui.button] = {}
 
-    # Obtenemos los eventos anteriores del club para el selector de plantilla
     previous_events = list_events_for_club(club_id)
     event_options = {
         e.id: f"{e.title} {f'vs {e.opponent_name}' if e.opponent_name else ''} ({e.date.strftime('%d/%m/%Y') if e.response_deadline else 'Sin fecha'})"
@@ -174,7 +173,7 @@ def new_event_page():
                 
                 ui.navigate.to("/staff")
             except Exception as e:
-                error_label.text = "Error al crear el evento. Revisa los datos."
+                error_label.text = f"Error al crear el evento: {str(e)}"
 
         with ui.row().classes("justify-end w-full max-w-xl mx-auto mt-4 gap-2"):
             ui.button("Cancelar", on_click=lambda: ui.navigate.to("/staff")).props("flat")
