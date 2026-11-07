@@ -1,10 +1,7 @@
-from datetime import date, time, datetime, timedelta
-
+from datetime import date, datetime, time, timedelta
 from sqlalchemy import select
-
 from core import get_session
 from models import Event, EventStatus, EventType, Slot, User, Unavailability
-
 from services.club_service import get_club_by_name
 
 def generate_slots(
@@ -38,6 +35,32 @@ def generate_slots(
 
     return slots
 
+def get_slot_date(d) -> date:
+    """Extrae un objeto date de forma segura sin importar cómo esté guardado."""
+    if isinstance(d, datetime):
+        return d.date()
+    if isinstance(d, date):
+        return d
+    if isinstance(d, str):
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d", "%d-%m-%Y"):
+            try:
+                return datetime.strptime(d.strip(), fmt).date()
+            except ValueError:
+                continue
+    return date.today()
+
+def normalize_time(t) -> time | str:
+    """Asegura que la hora sea un objeto time normalizado."""
+    if isinstance(t, time):
+        return t
+    if isinstance(t, str):
+        try:
+            parts = t.split(':')
+            return time(int(parts[0]), int(parts[1]))
+        except (ValueError, IndexError):
+            pass
+    return t
+
 def create_event(
     club_id: int,
     title: str,
@@ -54,47 +77,52 @@ def create_event(
     with get_session() as session:
         opponent_club = get_club_by_name(name=opponent_name) if opponent_name else None
 
-        base_slot_map = {}
-        unavs_by_base_slot = {}
-        active_club_player_ids = set()
-
-        if base_event_id:
+        valid_base_id = None
+        if base_event_id not in (None, "", "None"):
             try:
-                base_event_id_int = int(base_event_id)
+                valid_base_id = int(base_event_id)
             except (TypeError, ValueError):
-                base_event_id_int = None
+                pass
 
-            if base_event_id_int:
-                base_event = session.get(Event, base_event_id_int)
-                if not base_event or base_event.club_id != club_id:
-                    raise ValueError("error_base_event_not_found")
+        users_unavailable_by_week_key = {}
+
+        if valid_base_id:
+            base_event = session.get(Event, valid_base_id)
+            if not base_event or base_event.club_id != club_id:
+                raise ValueError("error_base_event_not_found")
+            
+            base_slots = session.scalars(select(Slot).where(Slot.event_id == valid_base_id)).all()
+            if base_slots:
+                # Determinar fecha de inicio del evento base para calcular las semanas relativas
+                base_start_date = min(get_slot_date(bs.day) for bs in base_slots)
                 
-                base_slots = session.scalars(select(Slot).where(Slot.event_id == base_event_id_int)).all()
-                if base_slots:
-                    # Obtenemos los usuarios del club y filtramos de forma segura:
-                    # Solo se excluye si is_active es explícitamente False. Si es True o no está definido, se incluye.
-                    club_users = session.scalars(
-                        select(User).where(User.club_id == club_id)
+                base_slot_ids_by_key = {}
+                for bs in base_slots:
+                    bs_date = get_slot_date(bs.day)
+                    week_index = (bs_date - base_start_date).days // 7
+                    weekday = bs_date.weekday()
+                    s_norm = normalize_time(bs.start_time)
+                    e_norm = normalize_time(bs.end_time)
+                    
+                    # Clave única por semana relativa, día y hora
+                    key = (week_index, weekday, s_norm, e_norm)
+                    base_slot_ids_by_key.setdefault(key, []).append(bs.id)
+
+                all_base_slot_ids = [sid for sids in base_slot_ids_by_key.values() for sid in sids]
+                if all_base_slot_ids:
+                    base_unavailabilities = session.scalars(
+                        select(Unavailability).where(Unavailability.slot_id.in_(all_base_slot_ids))
                     ).all()
-                    active_club_player_ids = {
-                        u.id for u in club_users 
-                        if getattr(u, 'is_active', True) is not False
-                    }
 
-                    # Mapear slots base por: (Día de la semana 0-6, hora inicio, hora fin)
-                    for bs in base_slots:
-                        base_weekday = bs.day.weekday() if hasattr(bs.day, 'weekday') else bs.day
-                        key = (base_weekday, bs.start_time, bs.end_time)
-                        base_slot_map[key] = bs.id
+                    slot_id_to_key = {}
+                    for k, sids in base_slot_ids_by_key.items():
+                        for sid in sids:
+                            slot_id_to_key[sid] = k
 
-                    base_slot_ids = list(base_slot_map.values())
-                    if base_slot_ids:
-                        base_unavailabilities = session.scalars(
-                            select(Unavailability).where(Unavailability.slot_id.in_(base_slot_ids))
-                        ).all()
-                        for unav in base_unavailabilities:
-                            if unav.user_id in active_club_player_ids:
-                                unavs_by_base_slot.setdefault(unav.slot_id, []).append(unav.user_id)
+                    for unav in base_unavailabilities:
+                        k = slot_id_to_key.get(unav.slot_id)
+                        if k:
+                            users_unavailable_by_week_key.setdefault(k, set()).add(unav.user_id)
 
         # Crear el nuevo evento
         event = Event(
@@ -114,22 +142,27 @@ def create_event(
         preloaded_unavs_count = 0
         preloaded_players_set = set()
 
-        # Crear franjas y cruzar indisponibilidades por patrón semanal
+        # Determinar fecha de inicio del nuevo evento para sus semanas relativas
+        new_start_date = min(day_date for day_date, _, _ in slots) if slots else date.today()
+
         for day_date, start, end in slots:
             new_slot = Slot(event_id=event.id, day=day_date, start_time=start, end_time=end)
             session.add(new_slot)
             session.flush()
 
-            if base_event_id:
-                new_weekday = day_date.weekday() if hasattr(day_date, 'weekday') else day_date
-                key = (new_weekday, start, end)
-                matching_base_slot_id = base_slot_map.get(key)
+            if valid_base_id:
+                week_index = (day_date - new_start_date).days // 7
+                weekday = day_date.weekday()
+                s_norm = normalize_time(start)
+                e_norm = normalize_time(end)
+                
+                key = (week_index, weekday, s_norm, e_norm)
 
-                if matching_base_slot_id and matching_base_slot_id in unavs_by_base_slot:
-                    for user_id in unavs_by_base_slot[matching_base_slot_id]:
-                        session.add(Unavailability(user_id=user_id, slot_id=new_slot.id))
-                        preloaded_unavs_count += 1
-                        preloaded_players_set.add(user_id)
+                user_ids = users_unavailable_by_week_key.get(key, set())
+                for user_id in user_ids:
+                    session.add(Unavailability(user_id=user_id, slot_id=new_slot.id))
+                    preloaded_unavs_count += 1
+                    preloaded_players_set.add(user_id)
 
         session.commit()
         session.refresh(event)
@@ -147,7 +180,6 @@ def delete_event(event_id: int) -> bool:
         event.confirmed_slot_id = None
         session.flush()
 
-        # 2. Procedemos con el borrado
         session.delete(event)
         session.commit()
 
@@ -198,4 +230,3 @@ def confirm_slot(event_id: int, slot_id: int) -> None:
         event.confirmed_slot_id = slot_id
         event.status = EventStatus.CONFIRMED
         session.commit()
-
