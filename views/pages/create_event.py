@@ -31,7 +31,7 @@ def new_event_page():
 
     previous_events = list_events_for_club(club_id)
     event_options = {
-        e.id: f"{e.title} {f'vs {e.opponent_name}' if e.opponent_name else ''} ({e.date.strftime('%d/%m/%Y') if e.response_deadline else 'Sin fecha'})"
+        e.id: f"{e.title} {f'vs {e.opponent_name}' if e.opponent_name else ''}"
         for e in previous_events
     }
 
@@ -46,11 +46,11 @@ def new_event_page():
             ).classes("w-full").props('standout="bg-primary text-white"')
             opponent_input = ui.input("Rival (opcional)").classes("w-full").props('standout="bg-primary text-white"')
 
-            # NUEVO: Selector opcional de evento base para precargar bajas
             base_event_select = ui.select(
                 options=event_options,
-                label="Precargar bajas desde un evento anterior (Opcional)",
-                clearable=True
+                label="Precargar bajas (opcional)",
+                clearable=True,
+                with_input=True
             ).classes("w-full").props('standout="bg-primary text-white"')
 
             ui.label("Franjas candidatas").classes("font-bold text-lg mt-6 text-gray-900")
