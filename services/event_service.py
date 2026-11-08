@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from sqlalchemy import select
 from core import get_session
-from models import Event, EventStatus, EventType, Slot, User, Unavailability
+from models import Event, EventStatus, EventType, Slot, Unavailability
 from services.club_service import get_club_by_name
 
 def generate_slots(
@@ -36,7 +36,6 @@ def generate_slots(
     return slots
 
 def get_slot_date(d) -> date:
-    """Extrae un objeto date de forma segura sin importar cómo esté guardado."""
     if isinstance(d, datetime):
         return d.date()
     if isinstance(d, date):
@@ -50,7 +49,6 @@ def get_slot_date(d) -> date:
     return date.today()
 
 def normalize_time(t) -> time | str:
-    """Asegura que la hora sea un objeto time normalizado."""
     if isinstance(t, time):
         return t
     if isinstance(t, str):
@@ -93,7 +91,6 @@ def create_event(
             
             base_slots = session.scalars(select(Slot).where(Slot.event_id == valid_base_id)).all()
             if base_slots:
-                # Determinar fecha de inicio del evento base para calcular las semanas relativas
                 base_start_date = min(get_slot_date(bs.day) for bs in base_slots)
                 
                 base_slot_ids_by_key = {}
@@ -104,7 +101,6 @@ def create_event(
                     s_norm = normalize_time(bs.start_time)
                     e_norm = normalize_time(bs.end_time)
                     
-                    # Clave única por semana relativa, día y hora
                     key = (week_index, weekday, s_norm, e_norm)
                     base_slot_ids_by_key.setdefault(key, []).append(bs.id)
 
@@ -124,7 +120,6 @@ def create_event(
                         if k:
                             users_unavailable_by_week_key.setdefault(k, set()).add(unav.user_id)
 
-        # Crear el nuevo evento
         event = Event(
             club_id=club_id,
             title=title,
@@ -142,7 +137,6 @@ def create_event(
         preloaded_unavs_count = 0
         preloaded_players_set = set()
 
-        # Determinar fecha de inicio del nuevo evento para sus semanas relativas
         new_start_date = min(day_date for day_date, _, _ in slots) if slots else date.today()
 
         for day_date, start, end in slots:
